@@ -55,7 +55,7 @@ lowering BIOS doesn't try change fan state: seems this method works.
 On exit (SIGTERM, SIGINT) dell-fan-mon set fans speed to max and try to
 restore BIOS fan control with corresponding *method*
 
-Use *method* 0 for disable this feature. In *method* 0 dell-fan-mon checks and cotrols fan state.<br>
+Use *method* 0 for disable this feature. In *method* 0 dell-fan-mon checks and controls fan state.<br>
 Check **fan_check_period** and **monitor_fan_id** options.
 
 ### LAPTOPS WITH DISCRETE GPU 
@@ -138,9 +138,9 @@ dell-fan-mon accepts the following command-line options
     (foreground mode).
   
   - **--mode** \<*mode*\>  
-    Set mode for accessing temp and fan controls. Default is 1.
-    *mode* 0: use dell-smm-hwmon(i8k) kernel module  
-    *mode* 1: use direct SMM BIOS calls (default)
+    Set mode for accessing temp and fan controls. Default is 1.<br>
+    *mode* 0: use dell-smm-hwmon(i8k) kernel module<br>
+    *mode* 1: use direct SMM BIOS calls (default)<br>
 
   - **--discrete_gpu_mode** \<*mode*\>  
     Monitoring mode of discrete GPU temp. Default is 1.<br> 
