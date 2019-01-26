@@ -67,7 +67,7 @@ states **t\_low\_fan**, **t\_mid\_fan**, **t\_high\_fan**:
         if temp in \[t\_low,t\_mid\] and fan\_state = OFF: fan\_state = OFF <br>
         if temp \> t\_mid: fan\_state = LOW if temp \> t\_high: fan\_state = HIGH<br>
     
-      - When temperature lowering: 
+      - When temperature lowering: <br>
         if temp \< t\_low: fan\_state = OFF <br>
         if temp in \[t\_low,t\_mid\] and fan\_state = LOW: fan\_state =
         LOW if temp in \[t\_low, t\_high\] and fan\_state = HIGH:
