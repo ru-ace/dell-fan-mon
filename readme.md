@@ -1,6 +1,12 @@
-# Dell Fan Monitor - temperature monitor for Dell Laptops
+# Dell Fan Monitor - temperature monitor for some Dell Laptops
 
 [![version][version-badge]][CHANGELOG] [![license][license-badge]][COPYING]
+
+### DISCLAIMER
+
+This program calls undocumented functions of Dell SMM BIOS  by defaults.
+
+**USE ON YOUR OWN RISK**   
 
 ### SYNOPSIS
 
@@ -25,12 +31,11 @@ dell-fan-mon can access for temp and fan control with two modes (**--mode** \<*m
   - *mode* 0: use dell-smm-hwmon(i8k) kernel module. This mode is more
     safety and can be used by unprivileged user.
 
-  - *mode* 1: use direct SMM BIOS calls. USE ON YOUR OWN RISK. To use
-    this mode, dell-fan-mon needs root privileges. 
+  - *mode* 1: use direct SMM BIOS calls. To use
+    this mode, dell-fan-mon needs root privileges. (default) 
 
 ### DISABLE BIOS FAN CONTROL
 
-USE ON YOUR OWN RISK.  
 dell-fan-mon can try disable BIOS fan control with two
 methods(**--bios\_disable\_method** \<*method*\>):
 
@@ -54,17 +59,16 @@ Use *method* 0 for disable this feature.
 
 ### LAPTOPS WITH DISCRETE GPU 
 
-USE ON YOUR OWN RISK.  
 dell-fan-mon supports monitoring discrete GPU temp (**--discrete_gpu_mode** \<*mode*\>) with 3 modes:
 
-  - *mode* 0: integrated GPU - monitor cpu_temp only (default)
+  - *mode* 0: monitor cpu_temp only (for integrated GPU) 
 
-  - *mode* 1: use temp = max(cpu_temp, gpu_temp) in fan control logic (highly recommended for laptops with discrete gpu)
+  - *mode* 1: use temp = max(cpu_temp, gpu_temp) in fan control logic (default)
 
   - *mode* 2: use separate fans control (for laptops with dedicated fan for discrete gpu)
 
-*mode* 1 and 2 required **--mode 1** (direct SMM BIOS calls)  
-*mode* 1 and 2 use  **gpu_temp_sensor_id** option, which is mainly determined automatically through SMM BIOS  
+*mode* 1 and 2 required **--mode 1** (direct SMM BIOS calls)<br>
+*mode* 1 and 2 use  **gpu_temp_sensor_id** option, which is mainly determined automatically through SMM BIOS. If autodetect was failed **discrete_gpu_mode** switch to *mode* 0<br>
 *mode* 2 use **cpu_fan_id** and **gpu_fan_id** options, that also attempt to automatically detect using the SMM BIOS, but most of the detection fails. 
 
 If you want to use *mode* 1 or 2, please run dell-fan-mon in verbose mode to be sure that autodetection works fine.
@@ -134,7 +138,7 @@ dell-fan-mon accepts the following command-line options
   
   - **--mode** \<*mode*\>  
     *mode* 0: use dell-smm-hwmon(i8k) kernel module  
-    *mode* 1: use direct SMM BIOS calls. USE ON YOUR OWN RISK. 
+    *mode* 1: use direct SMM BIOS calls.
 
   - **--discrete_gpu_mode** \<*mode*\>  
     Monitoring mode of discrete GPU temp. Default is 0.<br> 
@@ -150,7 +154,7 @@ dell-fan-mon accepts the following command-line options
     boundary temps(see above)
 
   - **--bios\_disable\_method** \<*method*\>  
-    USE ON YOUR OWN RISK. Set disable BIOS fans control method. Not
+    Set disable BIOS fans control method. Not
     always works. Default is 0.  
     *method* 0: don't disablе BIOS fans control  
     *method* 1: use DISABLE\_BIOS\_METHOD1  
@@ -203,10 +207,10 @@ dell-fan-mon accepts the following command-line options
     GPU temp sensor_id, mainly determined automatically through SMM BIOS. Used only when **discrete_gpu_mode** > 0. Default is 9 (autodetect). 
     
   - **--cpu_fan_id** \<*fan_id*\>
-    CPU fan_id, sometimes determined automatically through SMM BIOS. Used only when **discrete_gpu_mode** is 2. Default is 9 (autodetect).  
+    CPU fan_id, sometimes determined automatically through SMM BIOS. Used only when **discrete_gpu_mode** is 2.  1 = left, 0 = right. Default is 9 (autodetect).  
 
   - **--gpu_fan_id** \<*fan_id*\>
-  GPU fan_id, sometimes determined automatically through SMM BIOS. Used only when **discrete_gpu_mode** is 2. Default is 9 (autodetect).  
+  GPU fan_id, sometimes determined automatically through SMM BIOS. Used only when **discrete_gpu_mode** is 2. 1 = left, 0 = right. Default is 9 (autodetect).  
 
 ### CONFIGURATION
 

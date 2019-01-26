@@ -1,6 +1,10 @@
 .TH dell-fan-mon 1 "05 Jab 2019" "ace" Utilities
 .SH "NAME"
 dell-fan-mon \- temperature monitor for Dell Laptops
+.SH "DISCLAIMER"
+This program calls undocumented functions of Dell SMM BIOS by defaults.
+.br
+\fBUSE ON YOUR OWN RISK\fP
 .SH "SYNOPSIS"
 dell-fan-mon [\fIOPTION\fP]...
 .SH "DESCRIPTION"
@@ -16,10 +20,8 @@ dell-fan-mon can access for temp and fan control with two modes (\fB--mode\fR <\
 .IP \[bu] 2
 \fImode\fP 0: use dell-smm-hwmon(i8k) kernel module. This mode is more safety and can be used by unprivileged user.
 .IP \[bu] 
-\fImode\fP 1: use direct SMM BIOS calls. USE ON YOUR OWN RISK. To use this mode, dell-fan-mon needs root privileges. 
+\fImode\fP 1: use direct SMM BIOS calls. To use this mode, dell-fan-mon needs root privileges (default) 
 .SH "DISABLE BIOS FAN CONTROL"
-USE ON YOUR OWN RISK. 
-.br
 dell-fan-mon can try disable BIOS fan control with two methods(\fB--bios_disable_method\fR <\fImethod\fP>):
 .IP \[bu] 2
 \fImethod\fP 1: using code from \fIhttps://github.com/clopez/dellfan\fP
@@ -38,19 +40,17 @@ On exit (SIGTERM, SIGINT) dell-fan-mon set fans speed to max and try to restore 
 Use \fImethod\fP 0 for disable this feature. 
 
 .SH "LAPTOPS WITH DISCRETE GPU"
-USE ON YOUR OWN RISK. 
-.br
 dell-fan-mon supports monitoring discrete GPU temp (\fB--discrete_gpu_mode\fR <\fImode\fP>) with 3 modes:
 .IP \[bu] 2
-\fImode\fP 0: integrated GPU - monitor cpu_temp only (default)
+\fImode\fP 0: monitor cpu_temp only (for integrated GPU) 
 .IP \[bu]
-\fImode\fP 1: use temp = max(cpu_temp, gpu_temp) in fan control logic (highly recommended for laptops with discrete gpu)
+\fImode\fP 1: use temp = max(cpu_temp, gpu_temp) in fan control logic (default)
 .IP \[bu]
 \fImode\fP 2: use separate fans control (for laptops with dedicated fan for discrete gpu)
 .LP
 \fImode\fP 1 and 2 required \fB--mode 1\fR (direct SMM BIOS calls)
 .br
-\fImode\fP 1 and 2 use \fBgpu_temp_sensor_id\fR option, which is mainly determined automatically through SMM BIOS
+\fImode\fP 1 and 2 use \fBgpu_temp_sensor_id\fR option, which is mainly determined automatically through SMM BIOS. If autodetect was failed \fBdiscrete_gpu_mode\fR switch to \fImode\fP 0
 .br
 \fImode\fP 2 use \fBcpu_fan_id\fR and \fBgpu_fan_id\fR options, that also attempt to automatically detect using the SMM BIOS, but most of the detection fails.
 .LP
@@ -108,16 +108,16 @@ Report hardware status on stdout in get_only mode. Enable verbose output.
 Reports child PID in stdout and detach from console. Please don't use this option, until you know what you do: current version of the startup scripts works only with default value. Default is 0 (foreground mode).
 .TP
 \fB--mode\fR <\fImode\fP>
-Set mode for accessing temp and fan controls. Default is 0.
+Set mode for accessing temp and fan controls. Default is 1.
 .br
 \fImode\fP 0: use dell-smm-hwmon(i8k) kernel module
 .br
-\fImode\fP 1: use direct SMM BIOS calls. USE ON YOUR OWN RISK. 
+\fImode\fP 1: use direct SMM BIOS calls.
 .TP
 \fB--discrete_gpu_mode\fR <\fImode\fP>
-Monitoring mode of discrete GPU temp. Default is 0.
+Monitoring mode of discrete GPU temp. Default is 1.
 .br
-\fImode\fP 0: integrated GPU - monitor cpu_temp only (default)
+\fImode\fP 0: integrated GPU - monitor cpu_temp only
 .br
 \fImode\fP 1: use temp = max(cpu_temp, gpu_temp) in fan control logic (highly recommended for laptops with discrete gpu)
 .br
@@ -131,7 +131,7 @@ Set fan control logic. Default is 0.
 \fImode\fP 1: allow BIOS to control fans. Stop/start fans оnly at boundary temps(see above)
 .TP
 \fB--bios_disable_method\fR <\fImethod\fP>
-USE ON YOUR OWN RISK. Set disable BIOS fans control method. Not always works. Default is 0.
+Set disable BIOS fans control method. Not always works. Default is 0.
 .br
 \fImethod\fP 0: don't disablе BIOS fans control 
 .br

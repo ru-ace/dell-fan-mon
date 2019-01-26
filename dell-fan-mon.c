@@ -29,7 +29,7 @@
 #include "dell-fan-mon.h"
 struct t_state state[2];
 struct t_cfg cfg = {
-    .mode = 0,                      // 0 - i8k, 1 - smm
+    .mode = 1,                      // 0 - i8k, 1 - smm
     .fan_ctrl_logic_mode = 0,       // 0 - default (see end of dell-fan-mon.conf), 1 - allow bios to control fans: stops/starts fans оnly at boundary temps
     .bios_disable_method = 0,       // 0 - allow bios to control fans, 1/2 - smm calls for disabling bios fan control from https://github.com/clopez/dellfan
     .period = 1000,                 // period in ms for checking temp and setting fans
@@ -48,7 +48,7 @@ struct t_cfg cfg = {
     .foolproof_checks = true,       // run foolproof_checks()?
     .monitor_only = false,          // get_only mode - just monitor cpu temp & fan state(.monitor_fan_id)
     .tick = 100,                    // internal step in ms of main monitor loop
-    .discrete_gpu_mode = 0,         // 0 - cpu integrated, 1 - use max(cpu_temp/gpu_temp), 2 - separate control for gpu and cpu fans
+    .discrete_gpu_mode = 1,         // 0 - cpu integrated, 1 - use max(cpu_temp/gpu_temp), 2 - separate control for gpu and cpu fans
     .cpu_fan_id = 9,                // 0 - right, 1 - left, 9 - autodetect(use info from smm bios)
     .gpu_fan_id = 9,                // 0 - right, 1 - left, 9 - autodetect(use info from smm bios)
     .gpu_temp_sensor_id = 9,        // 9 - autodetect(use info from smm bios)
@@ -74,11 +74,11 @@ int get_cpu_fan_id()
     int fan0_type = send_smm(I8K_SMM_GET_FAN_TYPE, 0);
     int fan1_type = send_smm(I8K_SMM_GET_FAN_TYPE, 1);
     if (cfg.verbose)
-        printf("Fan type detections: right(0) is type %d, left(1) is type %d\n\n", fan0_type, fan1_type);
+        printf("Fan types detection: right(0) is type %d, left(1) is type %d\n\n", fan0_type, fan1_type);
 
-    if (fan0_type == 0 && fan1_type != 0)
+    if (fan0_type == 0 && fan1_type == 2)
         return 0;
-    if (fan1_type == 0 && fan0_type != 0)
+    if (fan1_type == 0 && fan0_type == 2)
         return 1;
     puts("Couldn't autodetect cpu_fan_id and gpu_fan_id.\nPlease use discrete_gpu_mode = 1. Or set it manualy on your own risk.");
     exit(EXIT_FAILURE);
@@ -90,10 +90,13 @@ int get_gpu_temp_sensor_id()
         int sensor_type = send_smm(I8K_SMM_GET_TEMP_TYPE, sensor_id);
         if (sensor_type == 1)
             return sensor_id;
-        //printf("sensor_id = %d, type is %d\n", sensor_id, sensor_type);
+        printf("sensor_id = %d, type is %d\n", sensor_id, sensor_type);
     }
-    puts("Coudn't autodetect gpu_temp_sensor_id. Please set it manualy.");
-    exit(EXIT_FAILURE);
+    if (cfg.verbose)
+        puts("Coudn't autodetect gpu_temp_sensor_id. Seems there no discrete gpu.\nSwitch to discrete_gpu_mode 0 (cpu temp monitor only).");
+
+    cfg.discrete_gpu_mode = 0;
+    return 0;
 }
 
 void set_fan_state(int fan, int state)
@@ -887,7 +890,9 @@ int main(int argc, char **argv)
             exit(EXIT_FAILURE);
         }
         if (cfg.gpu_temp_sensor_id == 9)
+        {
             cfg.gpu_temp_sensor_id = get_gpu_temp_sensor_id();
+        }
         if (cfg.discrete_gpu_mode == 2)
         {
             if (cfg.cpu_fan_id == 9)
