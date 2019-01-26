@@ -1,6 +1,8 @@
-### NAME
+# dell-fan-mon - temperature monitor for Dell Laptops
 
-dell-fan-mon - temperature monitor for Dell Laptops
+[![version][version-badge]][CHANGELOG] [![license][license-badge]][COPYING]
+
+ 
 
 ### SYNOPSIS
 
@@ -170,11 +172,11 @@ dell-fan-mon accepts the following command-line options
     Fan state corresponding to temperature threshold "low". Default is 0
     (OFF).
 
-  - **--t\_low\_fan** \<*fan\_state\_id*\>  
+  - **--t\_mid\_fan** \<*fan\_state\_id*\>  
     Fan state corresponding to temperature threshold "middle". Default
     is 1 (LOW).
 
-  - **--t\_low\_fan** \<*fan\_state\_id*\>  
+  - **--t\_high\_fan** \<*fan\_state\_id*\>  
     Fan state corresponding to temperature threshold "high". Default is
     2 (HIGH).
 
@@ -207,3 +209,8 @@ dell-fan-mon, scripts and other files are
 distributed under the GNU General Public License (GPL).  
 On Debian GNU/Linux systems, the complete text of the GNU General Public
 License can be found in \`/usr/share/common-licenses/GPL'.
+
+[version-badge]: https://img.shields.io/badge/version-1.0-blue.svg
+[CHANGELOG]: ./CHANGELOG.md
+[license-badge]: https://img.shields.io/badge/license-GPL3-blue.svg
+[COPYING]: ./COPYING.md
