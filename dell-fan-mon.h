@@ -4,7 +4,9 @@
 //dell-smm-hwmon
 #define I8K_SMM_SET_FAN 0x01a3
 #define I8K_SMM_GET_FAN 0x00a3
+#define I8K_SMM_GET_FAN_TYPE 0x03a3
 #define I8K_SMM_GET_TEMP 0x10a3
+#define I8K_SMM_GET_TEMP_TYPE 0x11a3
 #define I8K_SMM_GET_DELL_SIGNATURE 0xffa3 //I8K_SMM_GET_DELL_SIG2
 
 // dellfan start
@@ -49,13 +51,14 @@ int send_smm(unsigned int, unsigned int);
 void i8k_open();
 void set_fan_status(int, int);
 int get_fan_status(int);
-int get_cpu_temp();
+int get_temp(int);
 void set_fans_state(int);
 // i8kctl end
 
 // dell-fan-mon
+
 #define CFG_FILE "/etc/dell-fan-mon.conf"
-#define MON_SPACE "   "
+#define MON_SPACE "  "
 
 #define true 1
 #define false 0
@@ -86,6 +89,10 @@ struct t_cfg
     int monitor_only;
     int tick;
     int mode;
+    int discrete_gpu_mode;
+    int cpu_fan_id;
+    int gpu_fan_id;
+    int gpu_temp_sensor_id;
 };
 int check_dell_smm_signature();
 void monitor();
