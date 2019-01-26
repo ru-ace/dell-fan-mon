@@ -90,7 +90,7 @@ int get_gpu_temp_sensor_id()
         int sensor_type = send_smm(I8K_SMM_GET_TEMP_TYPE, sensor_id);
         if (sensor_type == 1)
             return sensor_id;
-        printf("sensor_id = %d, type is %d\n", sensor_id, sensor_type);
+        //printf("sensor_id = %d, type is %d\n", sensor_id, sensor_type);
     }
     if (cfg.verbose)
         puts("Coudn't autodetect gpu_temp_sensor_id. Seems there no discrete gpu.\nSwitch to discrete_gpu_mode 0 (cpu temp monitor only).");
