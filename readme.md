@@ -55,7 +55,8 @@ lowering BIOS doesn't try change fan state: seems this method works.
 On exit (SIGTERM, SIGINT) dell-fan-mon set fans speed to max and try to
 restore BIOS fan control with corresponding *method*
 
-Use *method* 0 for disable this feature.
+Use *method* 0 for disable this feature. In *method* 0 dell-fan-mon checks and cotrols fan state.<br>
+Check **fan_check_period** and **monitor_fan_id** options.
 
 ### LAPTOPS WITH DISCRETE GPU 
 
@@ -137,14 +138,15 @@ dell-fan-mon accepts the following command-line options
     (foreground mode).
   
   - **--mode** \<*mode*\>  
+    Set mode for accessing temp and fan controls. Default is 1.
     *mode* 0: use dell-smm-hwmon(i8k) kernel module  
-    *mode* 1: use direct SMM BIOS calls.
+    *mode* 1: use direct SMM BIOS calls (default)
 
   - **--discrete_gpu_mode** \<*mode*\>  
-    Monitoring mode of discrete GPU temp. Default is 0.<br> 
-    *mode* 0: integrated GPU - monitor cpu_temp only (default)<br>
-    *mode* 1: use temp = max(cpu_temp, gpu_temp) in fan control logic (highly recommended for laptops with discrete gpu)<br>
-    *mode*  2: use separate fans control (for laptops with dedicated fan for discrete gpu)<br>
+    Monitoring mode of discrete GPU temp. Default is 1.<br> 
+    *mode* 0: monitor cpu_temp only(integrated GPU)<br>
+    *mode* 1: use temp = max(cpu_temp, gpu_temp) in fan control logic (default)<br>
+    *mode* 2: use separate fans control (for laptops with dedicated fan for discrete gpu)<br>
 
 
   - **--fan\_ctrl\_logic\_mode** \<*mode*\>  
@@ -166,12 +168,12 @@ dell-fan-mon accepts the following command-line options
 
   - **--fan\_check\_period** \<*milliseconds*\>  
     Specifies the interval at which the daemon checks the fans speed and
-    set it. Useful if bios\_disable\_method don't works. Default is 1000
+    set it. Used only when **bios_disable_method 0**. Default is 1000
     milliseconds.
 
   - **--monitor\_fan\_id** \<*FAN\_ID*\>  
     Fan ID for monitoring: 1 = left, 0 = right. State of this fan will
-    shows in verbose mode. Default is 1. 
+    shows in verbose mode. Used only when **bios_disable_method 0**. Default is 1. 
 
   - **--jump\_timeout** \<*milliseconds*\>  
     Specifies the interval at which the daemon ignore cpu temperature,

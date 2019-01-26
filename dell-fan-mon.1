@@ -35,9 +35,11 @@ Before set this option in config file, stop dell-fan-mon (sudo service dell-fan-
 Wait until cpu temp will be greater \fBt_mid\fR and fans was on.
 If during cpu temp lowering BIOS doesn't try change fan state: seems this method works.
 .LP
-On exit (SIGTERM, SIGINT) dell-fan-mon set fans speed to max and try to restore BIOS fan control with corresponding \fImethod\fP
+On exit (SIGTERM, SIGINT) dell-fan-mon set fans speed to max and try to restore BIOS fan control with corresponding \fImethod\fP 
 .LP
-Use \fImethod\fP 0 for disable this feature. 
+Use \fImethod\fP 0 for disable this feature. In \fImethod\fP 0 dell-fan-mon checks and controls fan state. 
+.br
+Check \fBfan_check_period\fR and \fBmonitor_fan_id\fR options.
 
 .SH "LAPTOPS WITH DISCRETE GPU"
 dell-fan-mon supports monitoring discrete GPU temp (\fB--discrete_gpu_mode\fR <\fImode\fP>) with 3 modes:
@@ -143,10 +145,10 @@ Set disable BIOS fans control method. Not always works. Default is 0.
 Specifies the interval at which the daemon checks the hardware status. Default is 1000 milliseconds.
 .TP
 \fB--fan_check_period\fR <\fImilliseconds\fP>
-Specifies the interval at which the daemon checks the fans speed and set it. Useful if bios_disable_method don't works. Default is 1000 milliseconds.
+Specifies the interval at which the daemon checks the fans speed and set it. Used only when \fBbios_disable_method 0\fR. Default is 1000 milliseconds.
 .TP
 \fB--monitor_fan_id\fR <\fIFAN_ID\fP>
-Fan ID for monitoring: 1 = left, 0 = right. State of this fan will shows in verbose mode. Default is 1. 
+Fan ID for monitoring: 1 = left, 0 = right. State of this fan will shows in verbose mode. Used only when \fBbios_disable_method 0\fR. Default is 1. 
 .TP
 \fB--jump_timeout\fR <\fImilliseconds\fP>
 Specifies the interval at which the daemon ignore cpu temperature, after an abnormal temperature jump detected. Default is 2000 milliseconds.
