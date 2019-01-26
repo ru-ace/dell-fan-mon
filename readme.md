@@ -20,8 +20,7 @@ default as a service.
 
 ### ACCESS MODE
 
-dell-fan-mon can access for temp and fan control with two modes (**--mode**
-\<*mode*\>):
+dell-fan-mon can access for temp and fan control with two modes (**--mode** \<*mode*\>):
 
   - *mode* 0: use dell-smm-hwmon(i8k) kernel module. This mode is more
     safety and can be used by unprivileged user.
@@ -52,6 +51,23 @@ On exit (SIGTERM, SIGINT) dell-fan-mon set fans speed to max and try to
 restore BIOS fan control with corresponding *method*
 
 Use *method* 0 for disable this feature.
+
+### LAPTOPS WITH DISCRETE GPU 
+
+USE ON YOUR OWN RISK.  
+dell-fan-mon supports monitoring discrete GPU temp (**--discrete_gpu_mode** \<*mode*\>) with 3 modes:
+
+  - *mode* 0: integrated GPU - monitor cpu_temp only (default)
+
+  - *mode* 1: use temp = max(cpu_temp, gpu_temp) in fan control logic (highly recommended for laptops with discrete gpu)
+
+  - *mode* 2: use separate fans control (for laptops with dedicated fan for discrete gpu)
+
+*mode* 1 and 2 required **--mode 1** (direct SMM BIOS calls)  
+*mode* 1 and 2 use  **gpu_temp_sensor_id** option, which is mainly determined automatically through SMM BIOS  
+*mode* 2 use **cpu_fan_id** and **gpu_fan_id** options, that also attempt to automatically detect using the SMM BIOS, but most of the detection fails. 
+
+If you want to use *mode* 1 or 2, please run dell-fan-mon in verbose mode to be sure that autodetection works fine.
 
 ### FAN CONTROL LOGIC
 
@@ -115,11 +131,17 @@ dell-fan-mon accepts the following command-line options
     use this option, until you know what you do: current version of the
     startup scripts works only with default value. Default is 0
     (foreground mode).
-
+  
   - **--mode** \<*mode*\>  
-    Set mode for accessing temp and fan controls. Default is 0.  
     *mode* 0: use dell-smm-hwmon(i8k) kernel module  
     *mode* 1: use direct SMM BIOS calls. USE ON YOUR OWN RISK. 
+
+  - **--discrete_gpu_mode** \<*mode*\>  
+    Monitoring mode of discrete GPU temp. Default is 0.<br> 
+    *mode* 0: integrated GPU - monitor cpu_temp only (default)<br>
+    *mode* 1: use temp = max(cpu_temp, gpu_temp) in fan control logic (highly recommended for laptops with discrete gpu)<br>
+    *mode*  2: use separate fans control (for laptops with dedicated fan for discrete gpu)<br>
+
 
   - **--fan\_ctrl\_logic\_mode** \<*mode*\>  
     Set fan control logic. Default is 0.  
@@ -176,6 +198,15 @@ dell-fan-mon accepts the following command-line options
   - **--t\_high\_fan** \<*fan\_state\_id*\>  
     Fan state corresponding to temperature threshold "high". Default is
     2 (HIGH).
+
+  - **--gpu_temp_sensor_id** \<*sensor_id*\>
+    GPU temp sensor_id, mainly determined automatically through SMM BIOS. Used only when **discrete_gpu_mode** > 0. Default is 9 (autodetect). 
+    
+  - **--cpu_fan_id** \<*fan_id*\>
+    CPU fan_id, sometimes determined automatically through SMM BIOS. Used only when **discrete_gpu_mode** is 2. Default is 9 (autodetect).  
+
+  - **--gpu_fan_id** \<*fan_id*\>
+  GPU fan_id, sometimes determined automatically through SMM BIOS. Used only when **discrete_gpu_mode** is 2. Default is 9 (autodetect).  
 
 ### CONFIGURATION
 

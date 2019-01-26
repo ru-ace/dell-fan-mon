@@ -36,6 +36,26 @@ If during cpu temp lowering BIOS doesn't try change fan state: seems this method
 On exit (SIGTERM, SIGINT) dell-fan-mon set fans speed to max and try to restore BIOS fan control with corresponding \fImethod\fP
 .LP
 Use \fImethod\fP 0 for disable this feature. 
+
+.SH "LAPTOPS WITH DISCRETE GPU"
+USE ON YOUR OWN RISK. 
+.br
+dell-fan-mon supports monitoring discrete GPU temp (\fB--discrete_gpu_mode\fR <\fImode\fP>) with 3 modes:
+.IP \[bu] 2
+\fImode\fP 0: integrated GPU - monitor cpu_temp only (default)
+.IP \[bu]
+\fImode\fP 1: use temp = max(cpu_temp, gpu_temp) in fan control logic (highly recommended for laptops with discrete gpu)
+.IP \[bu]
+\fImode\fP 2: use separate fans control (for laptops with dedicated fan for discrete gpu)
+.LP
+\fImode\fP 1 and 2 required \fB--mode 1\fR (direct SMM BIOS calls)
+.br
+\fImode\fP 1 and 2 use \fBgpu_temp_sensor_id\fR option, which is mainly determined automatically through SMM BIOS
+.br
+\fImode\fP 2 use \fBcpu_fan_id\fR and \fBgpu_fan_id\fR options, that also attempt to automatically detect using the SMM BIOS, but most of the detection fails.
+.LP
+If you want to use \fImode\fP 1 or 2, please run dell-fan-mon in verbose mode to be sure that autodetection works fine
+
 .SH "FAN CONTROL LOGIC"
 dell-fan-mon has two modes of fans control logic(\fB--fan_ctrl_logic_mode\fR <\fImode\fP>) regarding 3 temperature thresholds \fBt_low\fR, \fBt_mid\fR, \fBt_high\fR and corresponding fan states \fBt_low_fan\fR, \fBt_mid_fan\fR, \fBt_high_fan\fR:
 .IP \[bu] 2
@@ -94,6 +114,15 @@ Set mode for accessing temp and fan controls. Default is 0.
 .br
 \fImode\fP 1: use direct SMM BIOS calls. USE ON YOUR OWN RISK. 
 .TP
+\fB--discrete_gpu_mode\fR <\fImode\fP>
+Monitoring mode of discrete GPU temp. Default is 0.
+.br
+\fImode\fP 0: integrated GPU - monitor cpu_temp only (default)
+.br
+\fImode\fP 1: use temp = max(cpu_temp, gpu_temp) in fan control logic (highly recommended for laptops with discrete gpu)
+.br
+\fImode\fP 2: use separate fans control (for laptops with dedicated fan for discrete gpu)
+.TP
 \fB--fan_ctrl_logic_mode\fR <\fImode\fP>
 Set fan control logic. Default is 0.
 .br
@@ -142,6 +171,16 @@ Fan state corresponding to temperature threshold "middle". Default is 1 (LOW).
 .TP
 \fB--t_high_fan\fR <\fIfan_state_id\fP>
 Fan state corresponding to temperature threshold "high". Default is 2 (HIGH).
+.TP
+\fB--gpu_temp_sensor_id\fR <\fIsensor_id\fP>
+GPU temp sensor_id, mainly determined automatically through SMM BIOS. Used only when \fBdiscrete_gpu_mode\fR > 0. Default is 9 (autodetect). 
+.TP    
+\fB--cpu_fan_id\fR <\fIfan_id\fP>
+CPU fan_id, sometimes determined automatically through SMM BIOS. Used only when \fBdiscrete_gpu_mode\fR is 2.  1 = left, 0 = right. Default is 9 (autodetect).  
+.TP
+\fB--gpu_fan_id\fR <\fIfan_id\fP>
+GPU fan_id, sometimes determined automatically through SMM BIOS. Used only when \fBdiscrete_gpu_mode\fR is 2.  1 = left, 0 = right. Default is 9 (autodetect).  
+
 .SH "CONFIGURATION"
 .LP
 dell-fan-mon has builtin default values of all options. User can see current values using \fB\-\-help\fR option. 

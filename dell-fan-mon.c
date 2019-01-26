@@ -73,7 +73,8 @@ int get_cpu_fan_id()
 {
     int fan0_type = send_smm(I8K_SMM_GET_FAN_TYPE, 0);
     int fan1_type = send_smm(I8K_SMM_GET_FAN_TYPE, 1);
-    //printf("Fan types: 0 is %d, 1 is %d\n", fan0_type, fan1_type);
+    if (cfg.verbose)
+        printf("Fan type detections: right(0) is type %d, left(1) is type %d\n\n", fan0_type, fan1_type);
 
     if (fan0_type == 0 && fan1_type != 0)
         return 0;
