@@ -1,6 +1,6 @@
 
-#ifndef _I8KMON_NG_H
-#define _I8KMON_NG_H
+#ifndef _DELL_FAN_MON_H
+#define _DELL_FAN_MON_H
 //dell-smm-hwmon
 #define I8K_SMM_SET_FAN 0x01a3
 #define I8K_SMM_GET_FAN 0x00a3
@@ -53,8 +53,8 @@ int get_cpu_temp();
 void set_fans_state(int);
 // i8kctl end
 
-// i8kmon-ng
-#define CFG_FILE "/etc/i8kmon-ng.conf"
+// dell-fan-mon
+#define CFG_FILE "/etc/dell-fan-mon.conf"
 #define MON_SPACE "   "
 
 #define true 1
@@ -65,8 +65,8 @@ void set_fans_state(int);
 
 struct t_cfg
 {
-    // brief descriptions at declaration of "struct t_cfg cfg" in i8kmon-ng.c
-    // more specific in i8kmon-ng.conf
+    // brief descriptions at declaration of "struct t_cfg cfg" in dell-fan-mon.c
+    // more specific in dell-fan-mon.conf
     int verbose;
     unsigned long period;
     unsigned long fan_check_period;
@@ -104,4 +104,5 @@ void cfg_error(int);
 
 int foolproof_error(char *);
 void foolproof_checks();
-#endif
+
+#endif //_DELL_FAN_MON_H

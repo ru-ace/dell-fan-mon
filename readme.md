@@ -1,39 +1,39 @@
 # NAME
 
-i8kmon-ng - temperature monitor for Dell Laptops
+dell-fan-mon - temperature monitor for Dell Laptops
 
 # SYNOPSIS
 
-i8kmon-ng \[*OPTION*\]...
+dell-fan-mon \[*OPTION*\]...
 
 # DESCRIPTION
 
-The i8kmon-ng is a daemon that monitors the cpu temperature, and control
+The dell-fan-mon is a daemon that monitors the cpu temperature, and control
 the fan speed on some Dell laptops.  
 It does that by means of regularly reading the system temperature, and
 choosing appropriate speed of the fans.
 
-All options can be customized at **/etc/i8kmon-ng.conf**, or via
+All options can be customized at **/etc/dell-fan-mon.conf**, or via
 command-line options
 
-On Debian and derivated OSes, i8kmon-ng starts in the background by
+On Debian and derivated OSes, dell-fan-mon starts in the background by
 default as a service.
 
 # ACCESS MODE
 
-i8kmon-ng can access for temp and fan control with two modes (**--mode**
+dell-fan-mon can access for temp and fan control with two modes (**--mode**
 \<*mode*\>):
 
   - *mode* 0: use dell-smm-hwmon(i8k) kernel module. This mode is more
     safety and can be used by unprivileged user.
 
   - *mode* 1: use direct SMM BIOS calls. USE ON YOUR OWN RISK. To use
-    this mode, i8kmon-ng needs root privileges. 
+    this mode, dell-fan-mon needs root privileges. 
 
 # DISABLE BIOS FAN CONTROL
 
 USE ON YOUR OWN RISK.  
-i8kmon-ng can try disable BIOS fan control with two
+dell-fan-mon can try disable BIOS fan control with two
 methods(**--bios\_disable\_method** \<*method*\>):
 
   - *method* 1: using code from *https://github.com/clopez/dellfan*
@@ -41,22 +41,22 @@ methods(**--bios\_disable\_method** \<*method*\>):
   - *method* 2: identical with
     *https://github.com/TomFreudenberg/dell-bios-fan-control*
 
-To use this feature, i8kmon-ng needs root privileges.
+To use this feature, dell-fan-mon needs root privileges.
 
-Before set this option in config file, stop i8kmon-ng (sudo service
-i8kmon-ng stop) and try every method in verbose mode (sudo i8kmon-ng -v
+Before set this option in config file, stop dell-fan-mon (sudo service
+dell-fan-mon stop) and try every method in verbose mode (sudo dell-fan-mon -v
 --bios\_disable\_method 2 --fan\_ctrl\_logic\_mode 0). Wait until cpu
 temp will be greater **t\_mid** and fans was on. If during cpu temp
 lowering BIOS doesn't try change fan state: seems this method works.
 
-On exit (SIGTERM, SIGINT) i8kmon-ng set fans speed to max and try to
+On exit (SIGTERM, SIGINT) dell-fan-mon set fans speed to max and try to
 restore BIOS fan control with corresponding *method*
 
 Use *method* 0 for disable this feature.
 
 # FAN CONTROL LOGIC
 
-i8kmon-ng has two modes of fans control
+dell-fan-mon has two modes of fans control
 logic(**--fan\_ctrl\_logic\_mode** \<*mode*\>) regarding 3 temperature
 thresholds **t\_low**, **t\_mid**, **t\_high** and corresponding fan
 states **t\_low\_fan**, **t\_mid\_fan**, **t\_high\_fan**:
@@ -87,7 +87,7 @@ states **t\_low\_fan**, **t\_mid\_fan**, **t\_high\_fan**:
 
 # ABNORMAL TEMP JUMP DETECTION
 
-i8kmon-ng has buildin mechanism for detect abnormal cpu temp jumps:
+dell-fan-mon has buildin mechanism for detect abnormal cpu temp jumps:
 short(1-2 seconds) cpu temp jumps on +20/+30 celsius which are cause of
 starting fans. You can control it via **--jump\_temp\_delta** and
 **--jump\_timeout** options.
@@ -96,11 +96,11 @@ To disable this feature set **jump\_temp\_delta** to 100.
 
 # OPTIONS
 
-i8kmon-ng accepts the following command-line options
+dell-fan-mon accepts the following command-line options
 
   - **-h**, **--help**  
     Show help and current values of all options. Before showing help
-    programm load /etc/i8kmon-ng.conf. So it can be used for config file
+    programm load /etc/dell-fan-mon.conf. So it can be used for config file
     validation.
 
   - **-v**, **--verbose**  
@@ -179,15 +179,15 @@ i8kmon-ng accepts the following command-line options
 
 # CONFIGURATION
 
-i8kmon-ng has builtin default values of all options. User can see
+dell-fan-mon has builtin default values of all options. User can see
 current values using **--help** option.
 
 All options with double dash described before can be changed in
-/etc/i8kmon-ng.conf using same name.
+/etc/dell-fan-mon.conf using same name.
 
 # FILES
 
-*/etc/i8kmon-ng.conf*
+*/etc/dell-fan-mon.conf*
 
 # AUTHOR
 
@@ -202,11 +202,7 @@ Code for enable/disable BIOS fan control and direct SMM BIOS calls from
 
 # COPYRIGHT
 
-i8kmon-ng and all the i8kutils programs, scripts and other files are
+dell-fan-mon and all the i8kutils programs, scripts and other files are
 distributed under the GNU General Public License (GPL).  
 On Debian GNU/Linux systems, the complete text of the GNU General Public
 License can be found in \`/usr/share/common-licenses/GPL'.
-
-# SEE ALSO
-
-**i8kctl**(1), **i8kmon**(1)

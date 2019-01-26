@@ -1,5 +1,5 @@
 /*
- * i8kmon-ng.c -- Fan monitor and control using dell-smm-hwmon(i8k) kernel module 
+ * dell-fan-mon.c -- Fan monitor and control using dell-smm-hwmon(i8k) kernel module 
  * or direct SMM BIOS calls on Dell laptops.
  * 
  * Copyright (C) 2019 https://github.com/ru-ace
@@ -26,11 +26,11 @@
 #include <sys/io.h>
 #include <unistd.h>
 #include <signal.h>
-#include "i8kmon-ng.h"
+#include "dell-fan-mon.h"
 
 struct t_cfg cfg = {
     .mode = 0,                      // 0 - i8k, 1 - smm
-    .fan_ctrl_logic_mode = 0,       // 0 - default (see end of i8kmon-ng.conf), 1 - allow bios to control fans: stops/starts fans оnly at boundary temps
+    .fan_ctrl_logic_mode = 0,       // 0 - default (see end of dell-fan-mon.conf), 1 - allow bios to control fans: stops/starts fans оnly at boundary temps
     .bios_disable_method = 0,       // 0 - allow bios to control fans, 1/2 - smm calls for disabling bios fan control from https://github.com/clopez/dellfan
     .period = 1000,                 // period in ms for checking temp and setting fans
     .fan_check_period = 1000,       // period in ms for check fans state and recover it (if bios control fans)
@@ -160,7 +160,7 @@ void init_smm()
         if (!check_dell_smm_signature())
         {
             show_header();
-            puts("Dell SMM BIOS signature not detected.\ni8kmon-ng works only on Dell Laptops.");
+            puts("Dell SMM BIOS signature not detected.\ndell-fan-mon works only on Dell Laptops.");
             exit_failure();
         }
     }
@@ -292,7 +292,7 @@ void bios_fan_control(int enable)
 }
 // dellfan end
 
-// i8kmon-ng start
+// dell-fan-mon start
 void set_fans_state(int state)
 {
     set_fan_state(I8K_FAN_LEFT, state);
@@ -569,13 +569,13 @@ void cfg_set(char *key, int value, int line_id)
 }
 void show_header()
 {
-    puts("i8kmon-ng v1.0 by https://github.com/ru-ace");
+    puts("dell-fan-mon v1.0 by https://github.com/ru-ace");
     puts("Fan monitor and control for Dell laptops via dell-smm-hwmon(i8k) kernel module or direct SMM BIOS calls.\n");
 }
 void usage()
 {
     show_header();
-    puts("Usage: i8kmon-ng [OPTIONS]");
+    puts("Usage: dell-fan-mon [OPTIONS]");
     puts("  -h  Show this help");
     puts("  -v  Verbose mode");
     puts("  -d  Daemon mode (detach from console)");

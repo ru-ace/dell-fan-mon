@@ -1,9 +1,9 @@
 [Unit]
 Description=Dell laptop thermal monitoring ng
-Documentation=man:i8kmon-ng
+Documentation=man:dell-fan-mon
 
 [Service]
-ExecStart=/usr/bin/i8kmon-ng
+ExecStart=/usr/bin/dell-fan-mon
 
 [Install]
 WantedBy=multi-user.target
