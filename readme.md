@@ -1,4 +1,4 @@
-# dell-fan-mon - temperature monitor for Dell Laptops
+# Dell Fan Monitor - temperature monitor for Dell Laptops
 
 [![version][version-badge]][CHANGELOG] [![license][license-badge]][COPYING]
 
