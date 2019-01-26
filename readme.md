@@ -1,12 +1,12 @@
-## NAME
+### NAME
 
 dell-fan-mon - temperature monitor for Dell Laptops
 
-## SYNOPSIS
+### SYNOPSIS
 
 dell-fan-mon \[*OPTION*\]...
 
-## DESCRIPTION
+### DESCRIPTION
 
 The dell-fan-mon is a daemon that monitors the cpu temperature, and control
 the fan speed on some Dell laptops.  
@@ -19,7 +19,7 @@ command-line options
 On Debian and derivated OSes, dell-fan-mon starts in the background by
 default as a service.
 
-## ACCESS MODE
+### ACCESS MODE
 
 dell-fan-mon can access for temp and fan control with two modes (**--mode**
 \<*mode*\>):
@@ -30,7 +30,7 @@ dell-fan-mon can access for temp and fan control with two modes (**--mode**
   - *mode* 1: use direct SMM BIOS calls. USE ON YOUR OWN RISK. To use
     this mode, dell-fan-mon needs root privileges. 
 
-## DISABLE BIOS FAN CONTROL
+### DISABLE BIOS FAN CONTROL
 
 USE ON YOUR OWN RISK.  
 dell-fan-mon can try disable BIOS fan control with two
@@ -54,7 +54,7 @@ restore BIOS fan control with corresponding *method*
 
 Use *method* 0 for disable this feature.
 
-## FAN CONTROL LOGIC
+### FAN CONTROL LOGIC
 
 dell-fan-mon has two modes of fans control
 logic(**--fan\_ctrl\_logic\_mode** \<*mode*\>) regarding 3 temperature
@@ -87,7 +87,7 @@ states **t\_low\_fan**, **t\_mid\_fan**, **t\_high\_fan**:
     if temp \< t\_low: fan\_state = t\_low\_fan <br>
     if temp \> t\_high: fan\_state = t\_high\_fan
 
-## ABNORMAL TEMP JUMP DETECTION
+### ABNORMAL TEMP JUMP DETECTION
 
 dell-fan-mon has buildin mechanism for detect abnormal cpu temp jumps:
 short(1-2 seconds) cpu temp jumps on +20/+30 celsius which are cause of
@@ -96,7 +96,7 @@ starting fans. You can control it via **--jump\_temp\_delta** and
 
 To disable this feature set **jump\_temp\_delta** to 100.
 
-## OPTIONS
+### OPTIONS
 
 dell-fan-mon accepts the following command-line options
 
@@ -179,7 +179,7 @@ dell-fan-mon accepts the following command-line options
     Fan state corresponding to temperature threshold "high". Default is
     2 (HIGH).
 
-## CONFIGURATION
+### CONFIGURATION
 
 dell-fan-mon has builtin default values of all options. User can see
 current values using **--help** option.
@@ -187,22 +187,22 @@ current values using **--help** option.
 All options with double dash described before can be changed in
 /etc/dell-fan-mon.conf using same name.
 
-## FILES
+### FILES
 
 */etc/dell-fan-mon.conf*
 
-## AUTHOR
+### AUTHOR
 
 ace (https://github.com/ru-ace)
 
-## CREDITS
+### CREDITS
 
 Code for access to temp and fan control using dell-smm-hwmon(i8k) kernel
 module from *https://github.com/vitorafsr/i8kutils*  
 Code for enable/disable BIOS fan control and direct SMM BIOS calls from
 *https://github.com/clopez/dellfan*
 
-## COPYRIGHT
+### COPYRIGHT
 
 dell-fan-mon, scripts and other files are
 distributed under the GNU General Public License (GPL).  
