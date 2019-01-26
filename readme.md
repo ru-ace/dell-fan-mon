@@ -2,16 +2,13 @@
 
 [![version][version-badge]][CHANGELOG] [![license][license-badge]][COPYING]
 
- 
-
 ### SYNOPSIS
 
 dell-fan-mon \[*OPTION*\]...
 
 ### DESCRIPTION
 
-The dell-fan-mon is a daemon that monitors the cpu temperature, and control
-the fan speed on some Dell laptops.  
+The dell-fan-mon is a daemon that monitors cpu and gpu temperatures, and controls the fan speed on some Dell laptops.
 It does that by means of regularly reading the system temperature, and
 choosing appropriate speed of the fans.
 

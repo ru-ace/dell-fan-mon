@@ -94,8 +94,27 @@ struct t_cfg
     int gpu_fan_id;
     int gpu_temp_sensor_id;
 };
+struct t_state
+{
+    //monitor state
+    int temp;
+    char temp_type;
+    int temp_prev;
+    int fan_state;
+    int real_fan_state;
+    int ignore_current_temp;
+    int jump_timeout_ticks;
+    int last_setted_fan_state;
+    int fan_id;
+};
+
 int check_dell_smm_signature();
 void monitor();
+void monitor_init_state(int);
+void monitor_set_fan_state(int);
+void monitor_get_fan_state(int);
+void monitor_get_temp_state(int);
+void monitor_state(int);
 void monitor_show_legend();
 void parse_args(int, char **);
 void exit_failure();
