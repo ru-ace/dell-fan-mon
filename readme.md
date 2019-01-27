@@ -4,17 +4,14 @@
 
 ### DISCLAIMER
 
-This program calls undocumented functions of Dell SMM BIOS  by defaults.
-
-**USE ON YOUR OWN RISK**   
-
+This program calls undocumented functions of Dell SMM BIOS  by defaults. **USE ON YOUR OWN RISK**   
 ### SYNOPSIS
 
 dell-fan-mon \[*OPTION*\]...
 
 ### DESCRIPTION
 
-The dell-fan-mon is a daemon that monitors cpu and gpu temperatures, and controls the fan speed on some Dell laptops.
+The dell-fan-mon is a daemon that monitors cpu / gpu temperatures, and controls the fan speed on some Dell laptops.
 It does that by means of regularly reading the system temperature, and
 choosing appropriate speed of the fans.
 
@@ -49,6 +46,8 @@ dell-fan-mon stop`) and try every method in verbose mode (`sudo dell-fan-mon -v
 --bios_disable_method 2 --fan_ctrl_logic_mode 0`). Wait until cpu
 temp will be greater **t\_mid** and fans was on. If during cpu temp
 lowering BIOS doesn't try change fan state: seems this method works.
+
+If you cant disable bios fan control, please pay attention to **fan_ctrl_logic_mode 1**
 
 On exit (SIGTERM, SIGINT) dell-fan-mon set fans speed to max and try to
 restore BIOS fan control with corresponding *method*
@@ -85,7 +84,8 @@ states **t\_low\_fan**, **t\_mid\_fan**, **t\_high\_fan**:
     
       - When temperature rising:<br> 
         if temp in \[t\_low,t\_mid\] and fan\_state = OFF: fan\_state = OFF <br>
-        if temp \> t\_mid: fan\_state = LOW if temp \> t\_high: fan\_state = HIGH<br>
+        if temp \> t\_mid: fan\_state = LOW<br>
+        if temp \> t\_high: fan\_state = HIGH<br>
     
       - When temperature lowering: <br>
         if temp \< t\_low: fan\_state = OFF <br>

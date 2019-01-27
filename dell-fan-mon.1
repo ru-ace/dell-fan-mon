@@ -35,6 +35,8 @@ Before set this option in config file, stop dell-fan-mon (sudo service dell-fan-
 Wait until cpu temp will be greater \fBt_mid\fR and fans was on.
 If during cpu temp lowering BIOS doesn't try change fan state: seems this method works.
 .LP
+If you cant disable bios fan control, please pay attention to \fBfan_ctrl_logic_mode 1\fR
+.LP
 On exit (SIGTERM, SIGINT) dell-fan-mon set fans speed to max and try to restore BIOS fan control with corresponding \fImethod\fP 
 .LP
 Use \fImethod\fP 0 for disable this feature. In \fImethod\fP 0 dell-fan-mon checks and controls fan state. 
