@@ -270,6 +270,9 @@ int check_dell_smm_signature()
         .ebx = 0,
     };
     int res = i8k_smm(&regs);
+    if (cfg.verbose)
+        printf("dell_smm_signature: %#06x, %#06x, %#06x\n\n", res, regs.eax, regs.edx);
+
     // regs.edx = DELL 0x44454c4c
     // regs.eax = DIAG 0x44494147
     return res == 0 && regs.eax == 0x44494147 && regs.edx == 0x44454c4c;
@@ -466,7 +469,7 @@ void monitor_get_fan_state(int state_id)
 {
     if (cfg.bios_disable_method)
     {
-        //don't monitor fans tate on bios_disable_method
+        //don't monitor fans states on bios_disable_method
         state[state_id].real_fan_state = state[state_id].fan_state;
     }
     else
