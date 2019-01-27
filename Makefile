@@ -10,7 +10,7 @@ dell-fan-mon: dell-fan-mon.c dell-fan-mon.h
 clean:
 	rm -f dell-fan-mon *.o
 
-install:
+upgrade:
 	service dell-fan-mon stop
 	install ./dell-fan-mon /usr/bin/
 #	mv /etc/dell-fan-mon.conf /etc/dell-fan-mon.conf.prev

@@ -247,4 +247,4 @@ License can be found in \`/usr/share/common-licenses/GPL'.
 [version-badge]: https://img.shields.io/badge/version-1.0-blue.svg
 [CHANGELOG]: ./CHANGELOG.md
 [license-badge]: https://img.shields.io/badge/license-GPL3-blue.svg
-[COPYING]: ./COPYING.md
+[COPYING]: ./COPYING
