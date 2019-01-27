@@ -93,6 +93,7 @@ struct t_cfg
     int cpu_fan_id;
     int gpu_fan_id;
     int gpu_temp_sensor_id;
+    int skip_signature_check;
 };
 struct t_state
 {

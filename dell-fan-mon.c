@@ -52,6 +52,7 @@ struct t_cfg cfg = {
     .cpu_fan_id = 9,                // 0 - right, 1 - left, 9 - autodetect(use info from smm bios)
     .gpu_fan_id = 9,                // 0 - right, 1 - left, 9 - autodetect(use info from smm bios)
     .gpu_temp_sensor_id = 9,        // 9 - autodetect(use info from smm bios)
+    .skip_signature_check = 0,      // skip check_dell_smm_signature()
 };
 
 //i8kctl/smm start
@@ -190,10 +191,11 @@ void init_smm()
     else
     {
         init_ioperm();
-        if (!check_dell_smm_signature())
+        if (!cfg.skip_signature_check && !check_dell_smm_signature())
         {
             show_header();
-            puts("Dell SMM BIOS signature not detected.\ndell-fan-mon works only on Dell Laptops.");
+            puts("Dell SMM BIOS signature not detected: dell-fan-mon works only on Dell Laptops.");
+            puts("You can disable this check ON YOUR ON RISK with --skip_signature_check in command line or skip_signature_check 1 in config file.");
             exit_failure();
         }
     }
@@ -270,8 +272,8 @@ int check_dell_smm_signature()
         .ebx = 0,
     };
     int res = i8k_smm(&regs);
-    if (cfg.verbose)
-        printf("dell_smm_signature: %#06x, %#06x, %#06x\n\n", res, regs.eax, regs.edx);
+    //if (cfg.verbose)
+    //printf("dell_smm_signature: %#06x, %#06x, %#06x\n\n", res, regs.eax, regs.edx);
 
     // regs.edx = DELL 0x44454c4c
     // regs.eax = DIAG 0x44494147
@@ -672,6 +674,8 @@ void cfg_set(char *key, int value, int line_id)
         cfg.t_high_fan = value;
     else if (strcmp(key, "foolproof_checks") == 0)
         cfg.foolproof_checks = value;
+    else if (strcmp(key, "skip_signature_check") == 0)
+        cfg.skip_signature_check = value;
     else if (strcmp(key, "bios_disable_method") == 0)
         cfg.bios_disable_method = value;
     else if (strcmp(key, "mode") == 0)
@@ -752,6 +756,10 @@ void parse_args(int argc, char **argv)
         {
             cfg.monitor_only = true;
             cfg.verbose = true;
+        }
+        else if ((strcmp(argv[i], "--skip_signature_check") == 0))
+        {
+            cfg.skip_signature_check = true;
         }
         else if (argv[i][0] == '-' && argv[i][1] == '-')
         {
