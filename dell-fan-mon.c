@@ -53,13 +53,24 @@ struct t_cfg cfg = {
     .gpu_fan_id = 9,                // 0 - right, 1 - left, 9 - autodetect(use info from smm bios)
     .gpu_temp_sensor_id = 9,        // 9 - autodetect(use info from smm bios)
     .skip_signature_check = 0,      // skip check_dell_smm_signature()
-    .get_gpu_temp_cmd = NULL,       // command for getting gpu temp if gpu_temp_sensor_id autodetect fails
+    .get_gpu_temp_cmd = NULL,       // command for obtains gpu temp if gpu_temp_sensor_id autodetect fails
+    .test_mode = false,             // try config with --test and exit
 };
 
 //i8kctl/smm start
 int i8k_fd;
 
-void i8k_open()
+int i8k_presence()
+{
+    i8k_fd = open(I8K_PROC, O_RDONLY);
+    if (i8k_fd < 0)
+        return false;
+
+    close(i8k_fd);
+    return true;
+}
+
+void i8k_init()
 {
     i8k_fd = open(I8K_PROC, O_RDONLY);
     if (i8k_fd < 0)
@@ -73,8 +84,8 @@ void i8k_open()
 }
 int get_cpu_fan_id()
 {
-    int fan0_type = send_smm(I8K_SMM_GET_FAN_TYPE, 0);
-    int fan1_type = send_smm(I8K_SMM_GET_FAN_TYPE, 1);
+    int fan0_type = smm_send(I8K_SMM_GET_FAN_TYPE, 0);
+    int fan1_type = smm_send(I8K_SMM_GET_FAN_TYPE, 1);
     if (cfg.verbose)
         printf("Fan types detection: right(0) is type %d, left(1) is type %d\n\n", fan0_type, fan1_type);
 
@@ -89,7 +100,7 @@ int get_gpu_temp_sensor_id()
 {
     for (int sensor_id = 0; sensor_id < 4; sensor_id++)
     {
-        int sensor_type = send_smm(I8K_SMM_GET_TEMP_TYPE, sensor_id);
+        int sensor_type = smm_send(I8K_SMM_GET_TEMP_TYPE, sensor_id);
         if (sensor_type == 1)
             return sensor_id;
 
@@ -103,13 +114,17 @@ int get_gpu_temp_sensor_id()
     }
     else
     {
-        if (cfg.verbose)
+        if (cfg.verbose || cfg.test_mode)
         {
+            puts("If you don't have discrete GPU - you can ignore this message.\n");
+
             puts("Couldn't autodetect gpu_temp_sensor_id. Seems there no discrete gpu.");
-            puts("Switch to discrete_gpu_mode 0 (cpu temp monitor only)");
+            puts("Using discrete_gpu_mode 0 (cpu temp monitor only)\n");
             puts("PLEASE NOTICE: If you have discrete gpu and can get temp via command line utilites");
             puts("You can set get_gpu_temp_cmd in " CFG_FILE " for provide command to get gpu temp");
-            puts("As output of command dell-fan-mon awaiting line with number\n");
+            puts("As output of command dell-fan-mon awaiting line with number.\n");
+            if (cfg.test_mode)
+                exit_failure();
         }
         cfg.discrete_gpu_mode = 0;
     }
@@ -122,9 +137,9 @@ void set_fan_state(int fan, int state)
     if (cfg.mode)
     {
         //smm
-        if (send_smm(I8K_SMM_SET_FAN, fan + (state << 8)) == -1)
+        if (smm_send(I8K_SMM_SET_FAN, fan + (state << 8)) == -1)
         {
-            puts("set_fan_state send_smm error");
+            puts("set_fan_state smm_send error");
             exit(EXIT_FAILURE);
         }
     }
@@ -146,10 +161,10 @@ int get_fan_state(int fan)
     {
         //smm
         usleep(50);
-        int res = send_smm(I8K_SMM_GET_FAN, fan);
+        int res = smm_send(I8K_SMM_GET_FAN, fan);
         if (res == -1)
         {
-            puts("get_fan_state send_smm error");
+            puts("get_fan_state smm_send error");
             exit(EXIT_FAILURE);
         }
         else
@@ -176,10 +191,10 @@ int get_temp(int sensor_id)
     if (cfg.mode)
     {
         //smm
-        int res = send_smm(I8K_SMM_GET_TEMP, sensor_id);
+        int res = smm_send(I8K_SMM_GET_TEMP, sensor_id);
         if (res == -1)
         {
-            puts("get_temp send_smm error");
+            puts("get_temp smm_send error");
             exit(EXIT_FAILURE);
         }
         else
@@ -200,7 +215,7 @@ int get_temp(int sensor_id)
 //i8kctl/smm end
 
 // dellfan start
-void init_smm()
+void smm_init()
 {
     if (geteuid() != 0)
     {
@@ -210,18 +225,22 @@ void init_smm()
     }
     else
     {
-        init_ioperm();
-        if (!cfg.skip_signature_check && !check_dell_smm_signature())
+        smm_init_ioperm();
+        if (!cfg.skip_signature_check && !(smm_check_dell_signature(I8K_SMM_GET_DELL_SIG1) || smm_check_dell_signature(I8K_SMM_GET_DELL_SIG2)))
         {
-            show_header();
-            puts("Dell SMM BIOS signature not detected: dell-fan-mon works only on Dell Laptops.");
-            puts("You can disable this check ON YOUR ON RISK with --skip_signature_check in command line or skip_signature_check 1 in config file.");
-            exit_failure();
+            //last chance: is dell-smm-hwmon(i8k) kernel module loaded?
+            if (!i8k_presence())
+            {
+                show_header();
+                puts("Dell SMM BIOS signature not detected: dell-fan-mon works only on Dell Laptops.");
+                puts("You can disable this check ON YOUR ON RISK with --skip_signature_check in command line or \"skip_signature_check 1\" in config file.");
+                exit_failure();
+            }
         }
     }
 }
 
-void init_ioperm()
+void smm_init_ioperm()
 {
     if (ioperm(0xb2, 4, 1))
     {
@@ -235,7 +254,7 @@ void init_ioperm()
     }
 }
 
-int i8k_smm(struct smm_regs *regs)
+int smm_asm_call(struct smm_regs *regs)
 {
     int rc;
     int eax = regs->eax;
@@ -271,7 +290,7 @@ int i8k_smm(struct smm_regs *regs)
     return 0;
 }
 
-int send_smm(unsigned int cmd, unsigned int arg)
+int smm_send(unsigned int cmd, unsigned int arg)
 {
     usleep(1000);
     struct smm_regs regs = {
@@ -279,19 +298,20 @@ int send_smm(unsigned int cmd, unsigned int arg)
         .ebx = arg,
     };
 
-    int res = i8k_smm(&regs);
+    int res = smm_asm_call(&regs);
     //if (cfg.verbose)
-    //printf("send_smm(%#06x, %#06x): i8k_smm returns %#06x, eax = %#06x\n", cmd, arg, res, regs.eax);
+    //printf("smm_send(%#06x, %#06x): i8k_smm returns %#06x, eax = %#06x\n", cmd, arg, res, regs.eax);
     return res == -1 ? res : regs.eax;
 }
 
-int check_dell_smm_signature()
+int smm_check_dell_signature(unsigned int signature_cmd)
 {
+    usleep(1000);
     struct smm_regs regs = {
-        .eax = I8K_SMM_GET_DELL_SIGNATURE,
+        .eax = signature_cmd,
         .ebx = 0,
     };
-    int res = i8k_smm(&regs);
+    int res = smm_asm_call(&regs);
     //if (cfg.verbose)
     //printf("dell_smm_signature: %#06x, %#06x, %#06x\n\n", res, regs.eax, regs.edx);
 
@@ -300,7 +320,7 @@ int check_dell_smm_signature()
     return res == 0 && regs.eax == 0x44494147 && regs.edx == 0x44454c4c;
 }
 
-void bios_fan_control(int enable)
+void set_bios_fan_control(int enable)
 {
     if (!cfg.mode)
     {
@@ -309,29 +329,29 @@ void bios_fan_control(int enable)
             printf("For using \"bios_disable_method\" you need root privileges\n");
             exit_failure();
         }
-        init_ioperm();
+        smm_init_ioperm();
     }
     int res = -1;
     if (cfg.bios_disable_method == 1)
     {
         if (enable)
-            res = send_smm(ENABLE_BIOS_METHOD1, 0);
+            res = smm_send(ENABLE_BIOS_METHOD1, 0);
         else
-            res = send_smm(DISABLE_BIOS_METHOD1, 0);
+            res = smm_send(DISABLE_BIOS_METHOD1, 0);
     }
     else if (cfg.bios_disable_method == 2)
     {
         if (enable)
-            res = send_smm(ENABLE_BIOS_METHOD2, 0);
+            res = smm_send(ENABLE_BIOS_METHOD2, 0);
         else
-            res = send_smm(DISABLE_BIOS_METHOD2, 0);
+            res = smm_send(DISABLE_BIOS_METHOD2, 0);
     }
     else if (cfg.bios_disable_method == 3)
     {
         if (enable)
-            res = send_smm(ENABLE_BIOS_METHOD3, 0);
+            res = smm_send(ENABLE_BIOS_METHOD3, 0);
         else
-            res = send_smm(DISABLE_BIOS_METHOD3, 0);
+            res = smm_send(DISABLE_BIOS_METHOD3, 0);
     }
     else
     {
@@ -356,7 +376,7 @@ void bios_fan_control(int enable)
 int get_gpu_temp_via_cmd()
 {
     int temp = 0;
-    char output[256] = "";
+    static char output[256] = "";
 
     FILE *fp = popen(cfg.get_gpu_temp_cmd, "r");
     if (fp == NULL)
@@ -409,7 +429,7 @@ void monitor_show_legend()
             if (cfg.gpu_temp_sensor_id == -1)
                 printf("  get_gpu_temp_cmd      [%s]\n", cfg.get_gpu_temp_cmd);
             else
-                printf("  gpu_temp_sensor_id    %d\n", cfg.gpu_temp_sensor_id);
+                printf("  gpu_temp_sensor_id    %d (autodetected)\n", cfg.gpu_temp_sensor_id);
         }
         if (cfg.discrete_gpu_mode == 2)
         {
@@ -764,6 +784,8 @@ void cfg_set(char *key, int value, int line_id)
 }
 void show_header()
 {
+    if (cfg.test_mode)
+        return;
     puts("dell-fan-mon v1.1 by https://github.com/ru-ace");
     puts("Fan monitor and control for Dell laptops via dell-smm-hwmon(i8k) kernel module or direct SMM BIOS calls.\n");
 }
@@ -775,6 +797,7 @@ void usage()
     puts("  -v  Verbose mode");
     puts("  -d  Daemon mode (detach from console)");
     puts("  -m  No control - monitor only (useful to monitor daemon work)");
+    puts("  -t  Try config and exit (useful for scripts)");
     puts("Options (see " CFG_FILE " or manpage for explains):");
     printf("  --mode MODE                       (default: %d = %s)\n", cfg.mode, cfg.mode ? "smm" : "i8k");
     printf("  --discrete_gpu_mode MODE          (default: %d = %s)\n", cfg.discrete_gpu_mode, (cfg.discrete_gpu_mode ? (cfg.discrete_gpu_mode == 1 ? "max(cpu_temp, gpu_temp)" : "separate fans control") : "cpu integrated"));
@@ -808,6 +831,10 @@ void parse_args(int argc, char **argv)
         else if ((strcmp(argv[i], "-v") == 0) || (strcmp(argv[i], "--verbose") == 0))
         {
             cfg.verbose = true;
+        }
+        else if ((strcmp(argv[i], "-t") == 0) || (strcmp(argv[i], "--test") == 0))
+        {
+            cfg.test_mode = true;
         }
         else if ((strcmp(argv[i], "-d") == 0) || (strcmp(argv[i], "--daemon") == 0))
         {
@@ -871,7 +898,7 @@ void signal_handler(int signal_id)
             printf("\nCatch signal %d. Restoring bios fan control.\n", signal_id);
         set_fans_state(I8K_FAN_HIGH);
         if (cfg.bios_disable_method == 1 || cfg.bios_disable_method == 2 || cfg.bios_disable_method == 3)
-            bios_fan_control(true);
+            set_bios_fan_control(true);
     }
     else if (cfg.verbose)
     {
@@ -894,7 +921,7 @@ void signal_handler_init()
     }
 }
 
-void bios_fan_control_scanner()
+void smm_bios_fan_control_scanner()
 {
     // Please DON'T USE THIS CODE - it may be DANGEROUS
     // Also: algorithm of c based on fact from my Dell 7559:
@@ -905,8 +932,8 @@ void bios_fan_control_scanner()
     for (int i = 0x5; i <= 0xff; i++)
     {
         int cmd = (i << 8) + 0xa3;
-        printf("send_smm(%#06x) ", cmd);
-        int res = -1; // send_smm(cmd, 0);
+        printf("smm_send(%#06x) ", cmd);
+        int res = -1; // smm_send(cmd, 0);
         printf("retured %#06x", res);
         if (res == -1)
         {
@@ -943,9 +970,9 @@ int main(int argc, char **argv)
     parse_args(argc, argv);
 
     if (cfg.mode)
-        init_smm();
+        smm_init();
     else
-        i8k_open();
+        i8k_init();
 
     if (cfg.verbose)
         show_header();
@@ -985,9 +1012,11 @@ int main(int argc, char **argv)
                 cfg.gpu_fan_id = 1 - cfg.cpu_fan_id;
         }
     }
+    if (cfg.test_mode)
+        exit(EXIT_SUCCESS);
 
     if (cfg.bios_disable_method && !cfg.monitor_only)
-        bios_fan_control(false);
+        set_bios_fan_control(false);
 
     if (cfg.daemon && !cfg.monitor_only)
         daemonize();

@@ -7,7 +7,14 @@
 #define I8K_SMM_GET_FAN_TYPE 0x03a3
 #define I8K_SMM_GET_TEMP 0x10a3
 #define I8K_SMM_GET_TEMP_TYPE 0x11a3
-#define I8K_SMM_GET_DELL_SIGNATURE 0xffa3 //I8K_SMM_GET_DELL_SIG2
+#define I8K_SMM_GET_DELL_SIG1 0xfea3
+#define I8K_SMM_GET_DELL_SIG2 0xffa3
+
+//common for i8kctl & delfan
+
+void set_fan_status(int, int);
+int get_fan_status(int);
+int get_temp(int);
 
 // dellfan start
 #define DISABLE_BIOS_METHOD1 0x30a3
@@ -27,10 +34,12 @@ struct smm_regs
     unsigned int esi __attribute__((packed));
     unsigned int edi __attribute__((packed));
 };
-void bios_fan_control(int);
-void init_ioperm();
-int i8k_smm(struct smm_regs *);
-int send_smm(unsigned int, unsigned int);
+void smm_init();
+void smm_init_ioperm();
+int smm_check_dell_signature(unsigned int);
+int smm_asm_call(struct smm_regs *);
+int smm_send(unsigned int, unsigned int);
+void set_bios_fan_control(int);
 
 // dellfan end
 
@@ -48,11 +57,9 @@ int send_smm(unsigned int, unsigned int);
 #define I8K_GET_FAN _IOWR('i', 0x86, size_t)
 #define I8K_SET_FAN _IOWR('i', 0x87, size_t)
 
-void i8k_open();
-void set_fan_status(int, int);
-int get_fan_status(int);
-int get_temp(int);
-void set_fans_state(int);
+void i8k_init();
+int i8k_presence();
+
 // i8kctl end
 
 // dell-fan-mon
@@ -95,6 +102,7 @@ struct t_cfg
     int gpu_temp_sensor_id;
     int skip_signature_check;
     char *get_gpu_temp_cmd;
+    int test_mode;
 };
 struct t_state
 {
@@ -110,8 +118,9 @@ struct t_state
     int fan_id;
 };
 
-int check_dell_smm_signature();
 int get_gpu_temp_via_cmd();
+
+void set_fans_state(int);
 void monitor();
 void monitor_init_state(int);
 void monitor_set_fan_state(int);

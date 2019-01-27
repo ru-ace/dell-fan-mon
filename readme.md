@@ -136,6 +136,10 @@ dell-fan-mon accepts the following command-line options
     use this option, until you know what you do: current version of the
     startup scripts works only with default value. Default is 0
     (foreground mode).
+
+  - **-t**, **--test**  
+  Useful for scripts. If init code works without errors - exits with code 0, 
+  otherwise - outputs error in stdout and exits with code 1.  
   
   - **--mode** \<*mode*\>  
     Set mode for accessing temp and fan controls. Default is 1.<br>
