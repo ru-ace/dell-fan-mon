@@ -21,8 +21,6 @@ choosing appropriate speed of the fans.
 All options can be customized at **/etc/dell-fan-mon.conf**, or via
 command-line options
 
-On Debian and derivated OSes, dell-fan-mon starts in the background by
-default as a service.
 
 ### ACCESS MODE
 
@@ -46,9 +44,9 @@ methods(**--bios\_disable\_method** \<*method*\>):
 
 To use this feature, dell-fan-mon needs root privileges.
 
-Before set this option in config file, stop dell-fan-mon (sudo service
-dell-fan-mon stop) and try every method in verbose mode (sudo dell-fan-mon -v
---bios\_disable\_method 2 --fan\_ctrl\_logic\_mode 0). Wait until cpu
+Before set this option in config file, stop dell-fan-mon (`sudo service
+dell-fan-mon stop`) and try every method in verbose mode (`sudo dell-fan-mon -v
+--bios_disable_method 2 --fan_ctrl_logic_mode 0`). Wait until cpu
 temp will be greater **t\_mid** and fans was on. If during cpu temp
 lowering BIOS doesn't try change fan state: seems this method works.
 
@@ -56,7 +54,7 @@ On exit (SIGTERM, SIGINT) dell-fan-mon set fans speed to max and try to
 restore BIOS fan control with corresponding *method*
 
 Use *method* 0 for disable this feature. In *method* 0 dell-fan-mon checks and controls fan state.<br>
-Check **fan_check_period** and **monitor_fan_id** options.
+See **fan_check_period** and **monitor_fan_id** options.
 
 ### LAPTOPS WITH DISCRETE GPU 
 
@@ -68,11 +66,13 @@ dell-fan-mon supports monitoring discrete GPU temp (**--discrete_gpu_mode** \<*m
 
   - *mode* 2: use separate fans control (for laptops with dedicated fan for discrete gpu)
 
-*mode* 1 and 2 required **--mode 1** (direct SMM BIOS calls)<br>
-*mode* 1 and 2 use  **gpu_temp_sensor_id** option, which is mainly determined automatically through SMM BIOS. If autodetect was failed **discrete_gpu_mode** switch to *mode* 0<br>
-*mode* 2 use **cpu_fan_id** and **gpu_fan_id** options, that also attempt to automatically detect using the SMM BIOS, but most of the detection fails. 
+dell-fan-mon supports two methods for obtaining GPU temp
+  - Using direct SMM BIOS calls(**--mode 1**) dell-fan-mon try to autodetect GPU temp sensor. If autodetection failed **discrete_gpu_mode** automatically switch to **0** (monitor cpu_temp only). If it happened for you: please use second method.
+  - Using third party console utility. Set **get_gpu_temp_cmd** options in config file. In this case you need provide command which output one line with one number (GPU temp) 
 
-If you want to use *mode* 1 or 2, please run dell-fan-mon in verbose mode to be sure that autodetection works fine.
+*mode* 2 use **cpu_fan_id** and **gpu_fan_id** options, that also attempts to automatically detect using the SMM BIOS (**--mode 1**). You can switch back to  **--mode 0** if you setting **get_gpu_temp_cmd**, **cpu_fan_id** amd **gpu_fan_id** manualy (you can see **cpu_fan_id** and **gpu_fan_id** values in verbose mode after successed autodetection) 
+
+If you have discrete GPU it's good idea to run dell-fan-mon in verbose mode to be sure that autodetection works fine.
 
 ### FAN CONTROL LOGIC
 
@@ -172,7 +172,7 @@ dell-fan-mon accepts the following command-line options
     milliseconds.
 
   - **--monitor\_fan\_id** \<*FAN\_ID*\>  
-    Fan ID for monitoring: 1 = left, 0 = right. State of this fan will
+    Fan ID for monitoring: 0 = right, 1 = left. State of this fan will
     shows in verbose mode. Used only when **bios_disable_method 0**. Default is 1. 
 
   - **--jump\_timeout** \<*milliseconds*\>  
@@ -205,14 +205,11 @@ dell-fan-mon accepts the following command-line options
     Fan state corresponding to temperature threshold "high". Default is
     2 (HIGH).
 
-  - **--gpu_temp_sensor_id** \<*sensor_id*\>
-    GPU temp sensor_id, mainly determined automatically through SMM BIOS. Used only when **discrete_gpu_mode** > 0. Default is 9 (autodetect). 
-    
   - **--cpu_fan_id** \<*fan_id*\>
-    CPU fan_id, sometimes determined automatically through SMM BIOS. Used only when **discrete_gpu_mode** is 2.  1 = left, 0 = right. Default is 9 (autodetect).  
+    CPU fan_id, sometimes determined automatically through SMM BIOS. Used only when **discrete_gpu_mode** is 2. 0 = right, 1 = left. Default is 9 (autodetect).  
 
   - **--gpu_fan_id** \<*fan_id*\>
-  GPU fan_id, sometimes determined automatically through SMM BIOS. Used only when **discrete_gpu_mode** is 2. 1 = left, 0 = right. Default is 9 (autodetect).  
+  GPU fan_id, sometimes determined automatically through SMM BIOS. Used only when **discrete_gpu_mode** is 2. 0 = right, 1 = left. Default is 9 (autodetect).  
 
 ### CONFIGURATION
 

@@ -356,7 +356,7 @@ void bios_fan_control(int enable)
 int get_gpu_temp_via_cmd()
 {
     int temp = 0;
-    char output[1024] = "";
+    char output[256] = "";
 
     FILE *fp = popen(cfg.get_gpu_temp_cmd, "r");
     if (fp == NULL)
@@ -959,7 +959,10 @@ int main(int argc, char **argv)
         (cfg.discrete_gpu_mode == 1 && cfg.get_gpu_temp_cmd != NULL) ||
         (cfg.discrete_gpu_mode == 2 && cfg.get_gpu_temp_cmd != NULL && cfg.cpu_fan_id != 9 && cfg.gpu_fan_id != 9))
     {
-        //do nothing (can be run under unprivileges user and no need to run autodetect)
+        //can be run under unprivileges user in mode 0, cause no need to run autodetect
+        //check get_gpu_temp_cmd before disabling bios
+        if (cfg.discrete_gpu_mode > 0)
+            get_gpu_temp_via_cmd();
         cfg.gpu_temp_sensor_id = -1;
     }
     else if (cfg.discrete_gpu_mode > 0)

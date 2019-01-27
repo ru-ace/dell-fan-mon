@@ -50,13 +50,20 @@ dell-fan-mon supports monitoring discrete GPU temp (\fB--discrete_gpu_mode\fR <\
 .IP \[bu]
 \fImode\fP 2: use separate fans control (for laptops with dedicated fan for discrete gpu)
 .LP
-\fImode\fP 1 and 2 required \fB--mode 1\fR (direct SMM BIOS calls)
-.br
-\fImode\fP 1 and 2 use \fBgpu_temp_sensor_id\fR option, which is mainly determined automatically through SMM BIOS. If autodetect was failed \fBdiscrete_gpu_mode\fR switch to \fImode\fP 0
-.br
-\fImode\fP 2 use \fBcpu_fan_id\fR and \fBgpu_fan_id\fR options, that also attempt to automatically detect using the SMM BIOS, but most of the detection fails.
+dell-fan-mon supports two methods for obtaining GPU temp:
+.IP \[bu] 2
+Using direct SMM BIOS calls(\fB--mode 1\fR) dell-fan-mon try to autodetect GPU temp sensor.
+If autodetection failed \fBdiscrete_gpu_mode\fR automatically switch to \fB0\fR (monitor cpu_temp only). 
+If it happened for you: please use second method.
+.IP \[bu]
+Using third party console utility. Set \fBget_gpu_temp_cmd\fR options in config file.
+In this case you need provide command which output one line with one number (GPU temp)
+
+\fImode\fP 2 use \fBcpu_fan_id\fR and \fBgpu_fan_id\fR options, that also attempt to automatically detect using the SMM BIOS(\fB--mode 1\fR). 
+You can switch back to \fB--mode 0\fR if you setting \fBget_gpu_temp_cmd\fR, \fBcpu_fan_id\fR amd \fBgpu_fan_id\fR manualy 
+(you can find \fBcpu_fan_id\fR and \fBgpu_fan_id\fR values in verbose mode after successed autodetection)
 .LP
-If you want to use \fImode\fP 1 or 2, please run dell-fan-mon in verbose mode to be sure that autodetection works fine
+If you have discrete GPU it's good idea to run dell-fan-mon in verbose mode to be sure that autodetection works fine.
 
 .SH "FAN CONTROL LOGIC"
 dell-fan-mon has two modes of fans control logic(\fB--fan_ctrl_logic_mode\fR <\fImode\fP>) regarding 3 temperature thresholds \fBt_low\fR, \fBt_mid\fR, \fBt_high\fR and corresponding fan states \fBt_low_fan\fR, \fBt_mid_fan\fR, \fBt_high_fan\fR:
@@ -173,9 +180,6 @@ Fan state corresponding to temperature threshold "middle". Default is 1 (LOW).
 .TP
 \fB--t_high_fan\fR <\fIfan_state_id\fP>
 Fan state corresponding to temperature threshold "high". Default is 2 (HIGH).
-.TP
-\fB--gpu_temp_sensor_id\fR <\fIsensor_id\fP>
-GPU temp sensor_id, mainly determined automatically through SMM BIOS. Used only when \fBdiscrete_gpu_mode\fR > 0. Default is 9 (autodetect). 
 .TP    
 \fB--cpu_fan_id\fR <\fIfan_id\fP>
 CPU fan_id, sometimes determined automatically through SMM BIOS. Used only when \fBdiscrete_gpu_mode\fR is 2.  1 = left, 0 = right. Default is 9 (autodetect).  
