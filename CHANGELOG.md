@@ -17,7 +17,7 @@ This file contains changelog of [Dell Fan Monitor](https://github.com/ru-ace/del
 ### Removed
 -->
 
-## [1.0] 2019-01-28
+## [1.0] 2019-01-26
 ### Changed
 - Renamed from i8kmon-ng to dell-fan-mon<br>
   Initially i8kmon-ng created to be part of [i8kutils](https://github.com/vitorafsr/i8kutils), but [pull request](https://github.com/vitorafsr/i8kutils/pull/18) was ignored and i wasn't able to contact with maintainer. So I decide to separate from i8kutils.
