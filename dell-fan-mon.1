@@ -157,8 +157,8 @@ Specifies the interval at which the daemon checks the hardware status. Default i
 \fB--fan_check_period\fR <\fImilliseconds\fP>
 Specifies the interval at which the daemon checks the fans speed and set it. Used only when \fBbios_disable_method 0\fR. Default is 1000 milliseconds.
 .TP
-\fB--monitor_fan_id\fR <\fIFAN_ID\fP>
-Fan ID for monitoring: 1 = left, 0 = right. State of this fan will shows in verbose mode. Used only when \fBbios_disable_method 0\fR. Default is 1. 
+\fB--monitor_fan_id\fR <\fIfan_id\fP>
+fan_id for monitoring: 0 = right,  1 = left. State of this fan will shows in verbose mode. Used only when \fBbios_disable_method 0\fR. Default is 1. 
 .TP
 \fB--jump_timeout\fR <\fImilliseconds\fP>
 Specifies the interval at which the daemon ignore cpu temperature, after an abnormal temperature jump detected. Default is 2000 milliseconds.
@@ -185,10 +185,12 @@ Fan state corresponding to temperature threshold "middle". Default is 1 (LOW).
 Fan state corresponding to temperature threshold "high". Default is 2 (HIGH).
 .TP    
 \fB--cpu_fan_id\fR <\fIfan_id\fP>
-CPU fan_id, sometimes determined automatically through SMM BIOS. Used only when \fBdiscrete_gpu_mode\fR is 2.  1 = left, 0 = right. Default is 9 (autodetect).  
+CPU fan_id, sometimes determined automatically through SMM BIOS. Used only when \fBdiscrete_gpu_mode\fR is 2. 
+0 = right, 1 = left. Default is 9 (autodetect).  
 .TP
 \fB--gpu_fan_id\fR <\fIfan_id\fP>
-GPU fan_id, sometimes determined automatically through SMM BIOS. Used only when \fBdiscrete_gpu_mode\fR is 2.  1 = left, 0 = right. Default is 9 (autodetect).  
+GPU fan_id, sometimes determined automatically through SMM BIOS. Used only when \fBdiscrete_gpu_mode\fR is 2.
+0 = right, 1 = left. Default is 9 (autodetect).  
 
 .SH "CONFIGURATION"
 .LP

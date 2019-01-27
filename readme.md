@@ -175,7 +175,7 @@ dell-fan-mon accepts the following command-line options
     set it. Used only when **bios_disable_method 0**. Default is 1000
     milliseconds.
 
-  - **--monitor\_fan\_id** \<*FAN\_ID*\>  
+  - **--monitor\_fan\_id** \<*fan_id*\>  
     Fan ID for monitoring: 0 = right, 1 = left. State of this fan will
     shows in verbose mode. Used only when **bios_disable_method 0**. Default is 1. 
 
