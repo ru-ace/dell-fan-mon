@@ -94,6 +94,7 @@ struct t_cfg
     int gpu_fan_id;
     int gpu_temp_sensor_id;
     int skip_signature_check;
+    char *get_gpu_temp_cmd;
 };
 struct t_state
 {
@@ -110,6 +111,7 @@ struct t_state
 };
 
 int check_dell_smm_signature();
+int get_gpu_temp_via_cmd();
 void monitor();
 void monitor_init_state(int);
 void monitor_set_fan_state(int);
