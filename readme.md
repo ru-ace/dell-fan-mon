@@ -249,7 +249,8 @@ sudo make test
 # check if disabling bios works for you:
 sudo ./dell-fan-mon -v --bios_disable_method 1
 sudo ./dell-fan-mon -v --bios_disable_method 2
-# wait until cpu temp will be greater t_mid(60°) and fans was on. If during cpu temp lowering BIOS doesn't try change fan state: seems this method works for you.
+# wait until cpu temp will be greater t_mid(60°) and fans was on. 
+# If during cpu temp lowering BIOS doesn't try change fan state: seems this method works for you.
 
 sudo make install
 

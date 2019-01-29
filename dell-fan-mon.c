@@ -98,7 +98,8 @@ int get_cpu_fan_id()
 }
 int get_gpu_temp_sensor_id()
 {
-    for (int sensor_id = 0; sensor_id < 4; sensor_id++)
+    int sensor_id;
+    for (sensor_id = 0; sensor_id < 4; sensor_id++)
     {
         int sensor_type = smm_send(I8K_SMM_GET_TEMP_TYPE, sensor_id);
         if (sensor_type == 1)
@@ -704,7 +705,8 @@ void cfg_load()
                     cfg_error(line_id);
                 int len = strlen(pos);
                 cfg.get_gpu_temp_cmd = (char *)malloc((len + 1) * sizeof(char));
-                for (int i = 0; i < len; i++)
+                int i;
+                for (i = 0; i < len; i++)
                     cfg.get_gpu_temp_cmd[i] = pos[i];
                 cfg.get_gpu_temp_cmd[len] = 0;
                 continue;
@@ -821,7 +823,8 @@ void usage()
 }
 void parse_args(int argc, char **argv)
 {
-    for (int i = 1; i < argc; i++)
+    int i;
+    for (i = 1; i < argc; i++)
     {
         if ((strcmp(argv[i], "-h") == 0) || (strcmp(argv[i], "--help") == 0))
         {
@@ -929,7 +932,8 @@ void smm_bios_fan_control_scanner()
     //       i don't sure that this fact is true for all dell notebooks.
     // No success on Dell 7559 :(
     exit_failure();
-    for (int i = 0x5; i <= 0xff; i++)
+    int i;
+    for (i = 0x5; i <= 0xff; i++)
     {
         int cmd = (i << 8) + 0xa3;
         printf("smm_send(%#06x) ", cmd);

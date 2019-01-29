@@ -1,5 +1,6 @@
-CFLAGS:=-g -O2 -fstack-protector-strong -Wformat -Werror=format-security -Wall
-LDFLAGS:=-Wl,-Bsymbolic-functions -Wl,-z,relro
+CC:=cc
+CFLAGS:=-g -O2 -Wformat -Werror=format-security -Wall
+#LDFLAGS:=-Wl,-Bsymbolic-functions -Wl,-z,relro
 INITDCTL:=$(shell which chkconfig)
 SYSTEMCTL:=$(shell which systemctl)
 SERVICE:=$(shell which service)
@@ -11,9 +12,9 @@ NAME=dell-fan-mon
 export DEB_BUILD_MAINT_OPTIONS = hardening=+all
 
 all: dell-fan-mon
-
+	@echo "Finish"
 dell-fan-mon: dell-fan-mon.c dell-fan-mon.h
-
+	$(CC) $(CFLAGS) $(NAME).c -o $(NAME)
 clean:
 	rm -f $(NAME) *.o
 test:
