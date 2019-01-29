@@ -14,7 +14,7 @@
 
 # dell-fan-mon	Fan monitor and control using i8k kernel module on Dell laptops.
 #
-#		Written by https://github.com/ru-ace
+#		Written by ace https://github.com/ru-ace
 
 
 
@@ -25,7 +25,7 @@ PATH=/sbin:/bin:/usr/sbin:/usr/bin
 NAME=dell-fan-mon
 DAEMON=/usr/bin/dell-fan-mon
 DESC="Fan control for Dell laptops"
-I8KMON_NG_ARGS=""
+DELL_FAN_MON_ARGS=""
 PIDFILE=/var/run/$NAME.pid
 
 test -x $DAEMON || (log_failure_msg "Could not find $DAEMON."; exit 5)
@@ -34,7 +34,7 @@ case "$1" in
 	start)
 		log_success_msg "Starting $DESC" "$NAME"
 		start-stop-daemon --start --quiet --pidfile $PIDFILE \
-			--background --make-pidfile --startas $DAEMON -- $I8KMON_NG_ARGS
+			--background --make-pidfile --startas $DAEMON -- $DELL_FAN_MON_ARGS
 		;;
 	stop)
 		log_success_msg "Stopping $DESC" "$NAME"

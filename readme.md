@@ -238,13 +238,32 @@ module from *https://github.com/vitorafsr/i8kutils*
 Code for enable/disable BIOS fan control and direct SMM BIOS calls from
 *https://github.com/clopez/dellfan*
 
-### COPYRIGHT
+### INSTALLATION
+```bash
+git clone --depth 1 https://github.com/ru-ace/dell-fan-mon.git
+cd dell-fan-mon
+make
+sudo make test
+# no output is good.
 
-dell-fan-mon, scripts and other files are
-distributed under the GNU General Public License (GPL).  
-On Debian GNU/Linux systems, the complete text of the GNU General Public
-License can be found in \`/usr/share/common-licenses/GPL'.
+# check if disabling bios works for you:
+sudo ./dell-fan-mon -v --bios_disable_method 1
+sudo ./dell-fan-mon -v --bios_disable_method 2
+# wait until cpu temp will be greater t_mid(60°) and fans was on. If during cpu temp lowering BIOS doesn't try change fan state: seems this method works for you.
 
+sudo make install
+
+# edit /etc/dell-fan-mon.conf :
+# set bios_disable_method which got earlier
+# if bios_disable_method does not work for you: i recommends use fan_ctrl_logic_mode 1
+# after config changed, lets check that no errors output on
+sudo dell-fan-mon --test
+sudo service dell-fan-mon restart
+
+# I highly recommend first running dell-fan-mon in verbose mode for a while to make sure that it suits you.
+sudo service dell-fan-mon stop
+sudo dell-fan-mon -v
+```
 [version-badge]: https://img.shields.io/badge/version-1.0-blue.svg
 [CHANGELOG]: ./CHANGELOG.md
 [license-badge]: https://img.shields.io/badge/license-GPL3-blue.svg

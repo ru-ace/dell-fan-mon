@@ -1,5 +1,5 @@
 [Unit]
-Description=Dell laptop thermal monitoring ng
+Description=Dell laptop thermal monitoring
 Documentation=man:dell-fan-mon
 
 [Service]
