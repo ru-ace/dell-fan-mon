@@ -264,8 +264,11 @@ sudo service dell-fan-mon restart
 # I highly recommend first running dell-fan-mon in verbose mode for a while to make sure that it suits you.
 sudo service dell-fan-mon stop
 sudo dell-fan-mon -v
+
+# if you decide to uninstall dell-fan-mon
+sudo make uninstall
 ```
-[version-badge]: https://img.shields.io/badge/version-1.0-blue.svg
+[version-badge]: https://img.shields.io/badge/version-1.1-blue.svg
 [CHANGELOG]: ./CHANGELOG.md
 [license-badge]: https://img.shields.io/badge/license-GPL3-blue.svg
 [COPYING]: ./COPYING
