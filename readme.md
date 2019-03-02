@@ -31,6 +31,8 @@ dell-fan-mon can access for temp and fan control with two modes (**--mode** \<*m
 
 ### DISABLE BIOS FAN CONTROL
 
+**Please note**: Disabling bios fan control use undocumented functions that were detected by [blind brute force calls to SMM BIOS](https://github.com/clopez/dellfan/blob/master/dellfan.c#L163). There no any guaranty.
+
 dell-fan-mon can try disable BIOS fan control with two
 methods(**--bios\_disable\_method** \<*method*\>):
 
