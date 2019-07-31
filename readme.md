@@ -270,6 +270,11 @@ sudo dell-fan-mon -v
 # if you decide to uninstall dell-fan-mon
 sudo make uninstall
 ```
+### FAQ
+
+Q: I got `init_ioperm: Operation not permitted`<br>
+A: Disable secure boot in bios. See issue #2
+
 [version-badge]: https://img.shields.io/badge/version-1.1-blue.svg
 [CHANGELOG]: ./CHANGELOG.md
 [license-badge]: https://img.shields.io/badge/license-GPL3-blue.svg
