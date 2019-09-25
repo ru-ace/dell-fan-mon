@@ -45,8 +45,8 @@ void set_bios_fan_control(int);
 
 // i8kctl start
 #define I8K_PROC "/proc/i8k"
-#define I8K_FAN_LEFT 1
-#define I8K_FAN_RIGHT 0
+//#define I8K_FAN_LEFT 1
+//#define I8K_FAN_RIGHT 0
 
 #define I8K_FAN_OFF 0
 #define I8K_FAN_LOW 1
@@ -73,6 +73,9 @@ int i8k_presence();
 #define EXIT_SUCCESS 0
 #define EXIT_FAILURE 1
 
+#define MAX_FANS 3
+#define MAX_SENSORS 4
+
 struct t_cfg
 {
     // brief descriptions at declaration of "struct t_cfg cfg" in dell-fan-mon.c
@@ -81,7 +84,6 @@ struct t_cfg
     unsigned long period;
     unsigned long fan_check_period;
     int fan_ctrl_logic_mode;
-    int monitor_fan_id;
     unsigned long jump_timeout;
     int jump_temp_delta;
     int t_low;
@@ -97,36 +99,42 @@ struct t_cfg
     int tick;
     int mode;
     int discrete_gpu_mode;
-    int cpu_fan_id;
+    int cpu_temp_sensor_id;
     int gpu_fan_id;
     int gpu_temp_sensor_id;
+    int fans_count;
     int skip_signature_check;
     char *get_gpu_temp_cmd;
     int test_mode;
 };
+//temp state
 struct t_state
 {
-    //monitor state
     int temp;
     char temp_type;
     int temp_prev;
-    int fan_state;
-    int real_fan_state;
     int ignore_current_temp;
     int jump_timeout_ticks;
+};
+
+//fan state
+struct t_fan_state
+{
+    int state_id;
+    int fan_state;
+    int real_fan_state;
     int last_setted_fan_state;
-    int fan_id;
 };
 
 int get_gpu_temp_via_cmd();
 
-void set_fans_state(int);
 void monitor();
 void monitor_init_state(int);
-void monitor_set_fan_state(int);
-void monitor_get_fan_state(int);
 void monitor_get_temp_state(int);
 void monitor_state(int);
+void monitor_init_fans_state();
+void monitor_set_fans_state();
+void monitor_get_fans_state();
 void monitor_show_legend();
 void parse_args(int, char **);
 void exit_failure();

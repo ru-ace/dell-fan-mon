@@ -7,6 +7,19 @@ This file contains changelog of [Dell Fan Monitor](https://github.com/ru-ace/del
 ### Fixed
 ### Removed
 -->
+## [Unreleased]
+### Added
+- Autodetection of fans number 
+- Support devices with 1 and 3 fans (before worked only on devices with 2 fans)
+- **--fans_count** for manual set number of fans
+### Changed
+- Autodetection of fans types now work properly (with any mount of fans on device) 
+- CPU/GPU termal sensor now autodetected properly (ignoring bad values)
+- Fans controls: now each of fans controlled separately in all modes (before was only in **discrete_gpu_mode 2**)
+- Output in verbose mode: Shows result of autodetection fans and sensors + add fan_id to monitoring.    
+### Removed
+- **--monitor_fan_id** - ignored for backward compatibility (output warning)
+- **--cpu_fan_id** - ignored for backward compatibility (output warning)
 
 ## [Version 1.1] 2019-02-02
 ### Added

@@ -24,6 +24,8 @@ dell-fan-mon can access for temp and fan control with two modes (\fB--mode\fR <\
 .SH "DISABLE BIOS FAN CONTROL"
 dell-fan-mon can try disable BIOS fan control with two methods(\fB--bios_disable_method\fR <\fImethod\fP>):
 .IP \[bu] 2
+\fImethod\fP 0: don't disable bios. dell-fan-mon checks and controls fans state (see \fBfan_check_period\fR option) (default)
+.IP \[bu]
 \fImethod\fP 1: using code from \fIhttps://github.com/clopez/dellfan\fP
 .IP \[bu]
 \fImethod\fP 2: identical with \fIhttps://github.com/TomFreudenberg/dell-bios-fan-control\fP
@@ -41,7 +43,7 @@ On exit (SIGTERM, SIGINT) dell-fan-mon set fans speed to max and try to restore 
 .LP
 Use \fImethod\fP 0 for disable this feature. In \fImethod\fP 0 dell-fan-mon checks and controls fan state. 
 .br
-Check \fBfan_check_period\fR and \fBmonitor_fan_id\fR options.
+Check \fBfan_check_period\fR options.
 
 .SH "LAPTOPS WITH DISCRETE GPU"
 dell-fan-mon supports monitoring discrete GPU temp (\fB--discrete_gpu_mode\fR <\fImode\fP>) with 3 modes:
@@ -61,9 +63,9 @@ If it happened for you: please use second method.
 Using third party console utility. Set \fBget_gpu_temp_cmd\fR options in config file.
 In this case you need provide command which output one line with one number (GPU temp)
 
-\fImode\fP 2 use \fBcpu_fan_id\fR and \fBgpu_fan_id\fR options, that also attempt to automatically detect using the SMM BIOS(\fB--mode 1\fR). 
-You can switch back to \fB--mode 0\fR if you setting \fBget_gpu_temp_cmd\fR, \fBcpu_fan_id\fR amd \fBgpu_fan_id\fR manualy 
-(you can find \fBcpu_fan_id\fR and \fBgpu_fan_id\fR values in verbose mode after successed autodetection)
+\fImode\fP 2 use \fBgpu_fan_id\fR options, that also attempt to automatically detect using the SMM BIOS(\fB--mode 1\fR). 
+You can switch back to \fB--mode 0\fR if you setting \fBget_gpu_temp_cmd\fR, \fBfans_count\fR amd \fBgpu_fan_id\fR manualy 
+(you can find \fBgpu_fan_id\fR values in verbose mode after successed autodetection)
 .LP
 If you have discrete GPU it's good idea to run dell-fan-mon in verbose mode to be sure that autodetection works fine.
 
@@ -159,9 +161,6 @@ Specifies the interval at which the daemon checks the hardware status. Default i
 \fB--fan_check_period\fR <\fImilliseconds\fP>
 Specifies the interval at which the daemon checks the fans speed and set it. Used only when \fBbios_disable_method 0\fR. Default is 1000 milliseconds.
 .TP
-\fB--monitor_fan_id\fR <\fIfan_id\fP>
-fan_id for monitoring: 0 = right,  1 = left. State of this fan will shows in verbose mode. Used only when \fBbios_disable_method 0\fR. Default is 1. 
-.TP
 \fB--jump_timeout\fR <\fImilliseconds\fP>
 Specifies the interval at which the daemon ignore cpu temperature, after an abnormal temperature jump detected. Default is 2000 milliseconds.
 .TP
@@ -185,14 +184,13 @@ Fan state corresponding to temperature threshold "middle". Default is 1 (LOW).
 .TP
 \fB--t_high_fan\fR <\fIfan_state_id\fP>
 Fan state corresponding to temperature threshold "high". Default is 2 (HIGH).
-.TP    
-\fB--cpu_fan_id\fR <\fIfan_id\fP>
-CPU fan_id, sometimes determined automatically through SMM BIOS. Used only when \fBdiscrete_gpu_mode\fR is 2. 
-0 = right, 1 = left. Default is 9 (autodetect).  
 .TP
 \fB--gpu_fan_id\fR <\fIfan_id\fP>
 GPU fan_id, sometimes determined automatically through SMM BIOS. Used only when \fBdiscrete_gpu_mode\fR is 2.
 0 = right, 1 = left. Default is 9 (autodetect).  
+.TP    
+\fB--fans_count\fR <\fInumber\fP>
+Set number of fans in your device. Normaly autodetected automatically through SMM BIOS. Default is 9 (autodetect).  
 
 .SH "CONFIGURATION"
 .LP

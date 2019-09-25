@@ -35,27 +35,23 @@ dell-fan-mon can access for temp and fan control with two modes (**--mode** \<*m
 
 dell-fan-mon can try disable BIOS fan control with two
 methods(**--bios\_disable\_method** \<*method*\>):
-
+  - *method* 0: don't disable bios. dell-fan-mon checks and controls fans state (see **fan_check_period** option) (default)
+  
   - *method* 1: using code from *https://github.com/clopez/dellfan*
 
-  - *method* 2: identical with
-    *https://github.com/TomFreudenberg/dell-bios-fan-control*
+  - *method* 2: identical with *https://github.com/TomFreudenberg/dell-bios-fan-control*
 
 To use this feature, dell-fan-mon needs root privileges.
 
-Before set this option in config file, stop dell-fan-mon (`sudo service
-dell-fan-mon stop`) and try every method in verbose mode (`sudo dell-fan-mon -v
---bios_disable_method 2 --fan_ctrl_logic_mode 0`). Wait until cpu
-temp will be greater **t\_mid** and fans was on. If during cpu temp
+Before set this option in config file, stop dell-fan-mon (`sudo service dell-fan-mon stop`) 
+and try every method in verbose mode (`sudo dell-fan-mon -v --bios_disable_method 2 --fan_ctrl_logic_mode 0`). 
+Wait until cpu temp will be greater **t\_mid** and fans was on. If during cpu temp
 lowering BIOS doesn't try change fan state: seems this method works.
 
 If you cant disable bios fan control, please pay attention to **fan_ctrl_logic_mode 1**
 
 On exit (SIGTERM, SIGINT) dell-fan-mon set fans speed to max and try to
 restore BIOS fan control with corresponding *method*
-
-Use *method* 0 for disable this feature. In *method* 0 dell-fan-mon checks and controls fan state.<br>
-See **fan_check_period** and **monitor_fan_id** options.
 
 ### LAPTOPS WITH DISCRETE GPU 
 
@@ -71,7 +67,7 @@ dell-fan-mon supports two methods for obtaining GPU temp
   - Using direct SMM BIOS calls(**--mode 1**) dell-fan-mon try to autodetect GPU temp sensor. If autodetection failed **discrete_gpu_mode** automatically switch to **0** (monitor cpu_temp only). If it happened for you: please use second method.
   - Using third party console utility. Set **get_gpu_temp_cmd** options in config file. In this case you need provide command which output one line with one number (GPU temp) 
 
-*mode* 2 use **cpu_fan_id** and **gpu_fan_id** options, that also attempts to automatically detect using the SMM BIOS (**--mode 1**). You can switch back to  **--mode 0** if you setting **get_gpu_temp_cmd**, **cpu_fan_id** amd **gpu_fan_id** manualy (you can see **cpu_fan_id** and **gpu_fan_id** values in verbose mode after successed autodetection) 
+*mode* 2 use **gpu_fan_id** option, that also attempts to automatically detect using the SMM BIOS (**--mode 1**). You can switch back to  **--mode 0** if you setting **get_gpu_temp_cmd**, **fans_count** and **gpu_fan_id** manualy (you can see **gpu_fan_id** value in verbose mode after successed autodetection) 
 
 If you have discrete GPU it's good idea to run dell-fan-mon in verbose mode to be sure that autodetection works fine.
 
@@ -177,10 +173,6 @@ dell-fan-mon accepts the following command-line options
     set it. Used only when **bios_disable_method 0**. Default is 1000
     milliseconds.
 
-  - **--monitor\_fan\_id** \<*fan_id*\>  
-    Fan ID for monitoring: 0 = right, 1 = left. State of this fan will
-    shows in verbose mode. Used only when **bios_disable_method 0**. Default is 1. 
-
   - **--jump\_timeout** \<*milliseconds*\>  
     Specifies the interval at which the daemon ignore cpu temperature,
     after an abnormal temperature jump detected. Default is 2000
@@ -211,11 +203,12 @@ dell-fan-mon accepts the following command-line options
     Fan state corresponding to temperature threshold "high". Default is
     2 (HIGH).
 
-  - **--cpu_fan_id** \<*fan_id*\>
-    CPU fan_id, sometimes determined automatically through SMM BIOS. Used only when **discrete_gpu_mode** is 2. 0 = right, 1 = left. Default is 9 (autodetect).  
-
   - **--gpu_fan_id** \<*fan_id*\>
   GPU fan_id, sometimes determined automatically through SMM BIOS. Used only when **discrete_gpu_mode** is 2. 0 = right, 1 = left. Default is 9 (autodetect).  
+
+  - **--fans_count** \<*number*\>
+    Set number of fans in your device. Normaly autodetected automatically through SMM BIOS. Default is 9 (autodetect). 
+
 
 ### CONFIGURATION
 

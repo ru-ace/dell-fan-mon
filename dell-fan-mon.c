@@ -27,34 +27,36 @@
 #include <unistd.h>
 #include <signal.h>
 #include "dell-fan-mon.h"
-struct t_state state[2];
+struct t_state state[2]; // 0 - cpu, 1 - gpu
+struct t_fan_state fan_state[MAX_FANS];
+
 struct t_cfg cfg = {
-    .mode = 1,                      // 0 - i8k, 1 - smm
-    .fan_ctrl_logic_mode = 0,       // 0 - default (see end of dell-fan-mon.conf), 1 - allow bios to control fans: stops/starts fans оnly at boundary temps
-    .bios_disable_method = 0,       // 0 - allow bios to control fans, 1/2 - smm calls for disabling bios fan control from https://github.com/clopez/dellfan
-    .period = 1000,                 // period in ms for checking temp and setting fans
-    .fan_check_period = 1000,       // period in ms for check fans state and recover it (if bios control fans)
-    .monitor_fan_id = I8K_FAN_LEFT, // ID of fan for monitoring: 0 = right, 1 = left
-    .jump_timeout = 2000,           // period in ms, when cpu temp was ingoring, after detected abnormal temp jump
-    .jump_temp_delta = 5,           // cpu temp difference between checks(.period), at which the new value is considered abnormal
-    .t_low = 45,                    // low cpu temp threshold
-    .t_mid = 60,                    // mid cpu temp threshold
-    .t_high = 80,                   // high cpu temp threshold
-    .t_low_fan = I8K_FAN_OFF,       // fan state for low cpu temp threshold
-    .t_mid_fan = I8K_FAN_LOW,       // fan state for mid cpu temp threshold
-    .t_high_fan = I8K_FAN_HIGH,     // fan state for high cpu temp threshold
-    .verbose = false,               // start in verbose mode
-    .daemon = false,                // run daemonize()?
-    .foolproof_checks = true,       // run foolproof_checks()?
-    .monitor_only = false,          // get_only mode - just monitor cpu temp & fan state(.monitor_fan_id)
-    .tick = 100,                    // internal step in ms of main monitor loop
-    .discrete_gpu_mode = 1,         // 0 - cpu integrated, 1 - use max(cpu_temp/gpu_temp), 2 - separate control for gpu and cpu fans
-    .cpu_fan_id = 9,                // 0 - right, 1 - left, 9 - autodetect(use info from smm bios)
-    .gpu_fan_id = 9,                // 0 - right, 1 - left, 9 - autodetect(use info from smm bios)
-    .gpu_temp_sensor_id = 9,        // 9 - autodetect(use info from smm bios)
-    .skip_signature_check = 0,      // skip check_dell_smm_signature()
-    .get_gpu_temp_cmd = NULL,       // command for obtains gpu temp if gpu_temp_sensor_id autodetect fails
-    .test_mode = false,             // try config with --test and exit
+    .mode = 1,                  // 0 - i8k, 1 - smm
+    .fan_ctrl_logic_mode = 0,   // 0 - default (see end of dell-fan-mon.conf), 1 - allow bios to control fans: stops/starts fans оnly at boundary temps
+    .bios_disable_method = 0,   // 0 - allow bios to control fans, 1/2 - smm calls for disabling bios fan control from https://github.com/clopez/dellfan
+    .period = 1000,             // period in ms for checking temp and setting fans
+    .fan_check_period = 1000,   // period in ms for check fans state and recover it (if bios control fans)
+    .jump_timeout = 2000,       // period in ms, when cpu temp was ingoring, after detected abnormal temp jump
+    .jump_temp_delta = 5,       // cpu temp difference between checks(.period), at which the new value is considered abnormal
+    .t_low = 45,                // low cpu temp threshold
+    .t_mid = 60,                // mid cpu temp threshold
+    .t_high = 80,               // high cpu temp threshold
+    .t_low_fan = I8K_FAN_OFF,   // fan state for low cpu temp threshold
+    .t_mid_fan = I8K_FAN_LOW,   // fan state for mid cpu temp threshold
+    .t_high_fan = I8K_FAN_HIGH, // fan state for high cpu temp threshold
+    .verbose = false,           // start in verbose mode
+    .daemon = false,            // run daemonize()?
+    .foolproof_checks = true,   // run foolproof_checks()?
+    .monitor_only = false,      // get_only mode - just monitor cpu temp & fan state(.monitor_fan_id)
+    .tick = 100,                // internal step in ms of main monitor loop
+    .discrete_gpu_mode = 1,     // 0 - cpu integrated, 1 - use max(cpu_temp, gpu_temp), 2 - separate control for gpu and cpu fans
+    .cpu_temp_sensor_id = 9,    // 9 - autodetect(use info from smm bios)
+    .gpu_temp_sensor_id = 9,    // 9 - autodetect(use info from smm bios)
+    .gpu_fan_id = 9,            // 0 - right, 1 - left, 9 - autodetect(use info from smm bios)
+    .fans_count = 9,            // 9 - autodetect(use info from smm bios)
+    .skip_signature_check = 0,  // skip check_dell_smm_signature()
+    .get_gpu_temp_cmd = NULL,   // command for obtains gpu temp if gpu_temp_sensor_id autodetect fails
+    .test_mode = false,         // try config with --test and exit
 };
 
 //i8kctl/smm start
@@ -82,55 +84,113 @@ void i8k_init()
         exit(EXIT_FAILURE);
     }
 }
-int get_cpu_fan_id()
+void scan_fans()
 {
-    int fan0_type = smm_send(I8K_SMM_GET_FAN_TYPE, 0);
-    int fan1_type = smm_send(I8K_SMM_GET_FAN_TYPE, 1);
     if (cfg.verbose)
-        printf("Fan types detection: right(0) is type %d, left(1) is type %d\n\n", fan0_type, fan1_type);
+        printf("Fans autodetect:");
 
-    if (fan0_type == 0 && fan1_type == 2)
-        return 0;
-    if (fan1_type == 0 && fan0_type == 2)
-        return 1;
-    puts("Couldn't autodetect cpu_fan_id and gpu_fan_id.\nPlease use discrete_gpu_mode = 1. Or set it manualy on your own risk.");
-    exit(EXIT_FAILURE);
+    if (!(cfg.fans_count == 9 || (cfg.gpu_fan_id == 9 && cfg.discrete_gpu_mode == 2)))
+    {
+        puts(" skipped - all params set by config");
+        return;
+    }
+
+    for (int fan_id = 0; fan_id < MAX_FANS; fan_id++)
+    {
+        int fan_type = smm_send(I8K_SMM_GET_FAN_TYPE, fan_id);
+
+        if (cfg.verbose)
+            printf(" ƒ%d·%d", fan_id, fan_type);
+
+        if (fan_type < 0)
+        {
+            if (cfg.fans_count == 9)
+                cfg.fans_count = fan_id;
+            break;
+        }
+        else if (fan_type == 0)
+        {
+            if (cfg.verbose)
+                printf("·cpu");
+        }
+        else if (fan_type == 2 && cfg.gpu_fan_id == 9 && cfg.discrete_gpu_mode == 2)
+        {
+            if (cfg.verbose)
+                printf("·gpu");
+            cfg.gpu_fan_id = fan_id;
+        }
+    }
+    if (cfg.verbose)
+        printf(" fans_count = %d\n", cfg.fans_count);
+
+    if ((cfg.fans_count == 9 || (cfg.gpu_fan_id == 9 && cfg.discrete_gpu_mode == 2)))
+        exit_failure("Couldn't autodetect gpu_fan_id.\nSet it manualy on your own risk.");
 }
-int get_gpu_temp_sensor_id()
+
+void scan_sensors()
 {
-    int sensor_id;
-    for (sensor_id = 0; sensor_id < 4; sensor_id++)
+    if (cfg.verbose)
+        printf("Sensors autodetect:");
+
+    for (int sensor_id = 0; sensor_id < MAX_SENSORS; sensor_id++)
     {
         int sensor_type = smm_send(I8K_SMM_GET_TEMP_TYPE, sensor_id);
-        if (sensor_type == 1)
-            return sensor_id;
+        if (cfg.verbose)
+            printf(" t%d·%d", sensor_id, sensor_type);
 
-        //printf("sensor_id = %d, type is %d\n", sensor_id, sensor_type);
-    }
-
-    if (cfg.get_gpu_temp_cmd != NULL)
-    {
-        get_gpu_temp_via_cmd();
-        return -1;
-    }
-    else
-    {
-        if (cfg.verbose || cfg.test_mode)
+        if (sensor_type >= 0)
         {
-            puts("If you don't have discrete GPU - you can ignore this message.\n");
+            int temp = smm_send(I8K_SMM_GET_TEMP, sensor_id);
 
-            puts("Couldn't autodetect gpu_temp_sensor_id. Seems there no discrete gpu.");
-            puts("Using discrete_gpu_mode 0 (cpu temp monitor only)\n");
-            puts("PLEASE NOTICE: If you have discrete gpu and can get temp via command line utilites");
-            puts("You can set get_gpu_temp_cmd in " CFG_FILE " for provide command to get gpu temp");
-            puts("As output of command dell-fan-mon awaiting line with number.\n");
-            if (cfg.test_mode)
-                exit_failure();
+            if (temp > 0 && temp < 128)
+            {
+                if (sensor_type == 0 && cfg.cpu_temp_sensor_id == 9)
+                {
+                    if (cfg.verbose)
+                        printf("·cpu");
+                    cfg.cpu_temp_sensor_id = sensor_id;
+                }
+                else if (sensor_type == 1 && cfg.gpu_temp_sensor_id == 9)
+                {
+                    if (cfg.verbose)
+                        printf("·gpu");
+                    cfg.gpu_temp_sensor_id = sensor_id;
+                }
+            }
+            if (cfg.verbose)
+                printf("·%d°", temp);
         }
-        cfg.discrete_gpu_mode = 0;
     }
+    if (cfg.verbose)
+        puts("");
 
-    return 0;
+    if (cfg.cpu_temp_sensor_id == 9)
+        exit_failure("Couldn't autodetect cpu_temp_sensor_id.");
+
+    if (cfg.discrete_gpu_mode && cfg.gpu_temp_sensor_id == 9)
+    {
+        if (cfg.get_gpu_temp_cmd != NULL)
+        {
+            get_gpu_temp_via_cmd();
+            cfg.gpu_temp_sensor_id = -1;
+        }
+        else
+        {
+            if (cfg.verbose || cfg.test_mode)
+            {
+                puts("If you don't have discrete GPU - you can ignore this message.\n");
+
+                puts("Couldn't autodetect gpu_temp_sensor_id. Seems there no discrete gpu.");
+                puts("Using discrete_gpu_mode 0 (cpu temp monitor only)\n");
+                puts("PLEASE NOTICE: If you have discrete gpu and can get temp via command line utilites");
+                puts("You can set get_gpu_temp_cmd in " CFG_FILE " to provide command for acquiring gpu temp");
+                puts("As output of command dell-fan-mon awaiting line with number.\n");
+                if (cfg.test_mode)
+                    exit_failure("");
+            }
+            cfg.discrete_gpu_mode = 0;
+        }
+    }
 }
 
 void set_fan_state(int fan, int state)
@@ -139,10 +199,7 @@ void set_fan_state(int fan, int state)
     {
         //smm
         if (smm_send(I8K_SMM_SET_FAN, fan + (state << 8)) == -1)
-        {
-            puts("set_fan_state smm_send error");
-            exit(EXIT_FAILURE);
-        }
+            exit_failure("set_fan_state smm_send error");
     }
     else
     {
@@ -151,7 +208,7 @@ void set_fan_state(int fan, int state)
         if (ioctl(i8k_fd, I8K_SET_FAN, &args) != 0)
         {
             perror("set_fan_state ioctl error");
-            exit(EXIT_FAILURE);
+            exit_failure("");
         }
     }
 }
@@ -164,14 +221,9 @@ int get_fan_state(int fan)
         usleep(50);
         int res = smm_send(I8K_SMM_GET_FAN, fan);
         if (res == -1)
-        {
-            puts("get_fan_state smm_send error");
-            exit(EXIT_FAILURE);
-        }
+            exit_failure("get_fan_state smm_send error");
         else
-        {
             return res;
-        }
     }
     else
     {
@@ -180,8 +232,9 @@ int get_fan_state(int fan)
         if (ioctl(i8k_fd, I8K_GET_FAN, &args) == 0)
             return args[0];
         perror("get_fan_state ioctl error");
-        exit(EXIT_FAILURE);
+        exit_failure("");
     }
+    return -1;
 }
 
 int get_temp(int sensor_id)
@@ -194,14 +247,9 @@ int get_temp(int sensor_id)
         //smm
         int res = smm_send(I8K_SMM_GET_TEMP, sensor_id);
         if (res == -1)
-        {
-            puts("get_temp smm_send error");
-            exit(EXIT_FAILURE);
-        }
+            exit_failure("get_temp smm_send error");
         else
-        {
             return res;
-        }
     }
     else
     {
@@ -210,8 +258,9 @@ int get_temp(int sensor_id)
         if (ioctl(i8k_fd, I8K_GET_TEMP, &args) == 0)
             return args[0];
         perror("get_cpu_temp ioctl error");
-        exit(EXIT_FAILURE);
+        exit_failure("");
     }
+    return -1;
 }
 //i8kctl/smm end
 
@@ -221,8 +270,7 @@ void smm_init()
     if (geteuid() != 0)
     {
         show_header();
-        puts("For using \"mode 1\"(smm) you need root privileges\n");
-        exit_failure();
+        exit_failure("For using \"mode 1\"(smm) you need root privileges");
     }
     else
     {
@@ -233,9 +281,7 @@ void smm_init()
             if (!i8k_presence())
             {
                 show_header();
-                puts("Dell SMM BIOS signature not detected: dell-fan-mon works only on Dell Laptops.");
-                puts("You can disable this check ON YOUR ON RISK with --skip_signature_check in command line or \"skip_signature_check 1\" in config file.");
-                exit_failure();
+                exit_failure("Dell SMM BIOS signature not detected: dell-fan-mon works only on Dell Laptops.\nYou can disable this check ON YOUR ON RISK with --skip_signature_check in command line or \"skip_signature_check 1\" in config file.");
             }
         }
     }
@@ -246,12 +292,12 @@ void smm_init_ioperm()
     if (ioperm(0xb2, 4, 1))
     {
         perror("init_ioperm");
-        exit_failure();
+        exit_failure("");
     }
     if (ioperm(0x84, 4, 1))
     {
         perror("init_ioperm");
-        exit_failure();
+        exit_failure("");
     }
 }
 
@@ -326,10 +372,8 @@ void set_bios_fan_control(int enable)
     if (!cfg.mode)
     {
         if (geteuid() != 0)
-        {
-            printf("For using \"bios_disable_method\" you need root privileges\n");
-            exit_failure();
-        }
+            exit_failure("For using \"bios_disable_method\" you need root privileges");
+
         smm_init_ioperm();
     }
     int res = -1;
@@ -355,15 +399,12 @@ void set_bios_fan_control(int enable)
             res = smm_send(DISABLE_BIOS_METHOD3, 0);
     }
     else
-    {
-        printf("bios_disable_method can be 0 (dont try disable bios), 1 or 2");
-        exit_failure();
-    }
+        exit_failure("bios_disable_method can be 0 (dont try disable bios), 1 or 2");
 
     if (res == -1)
     {
-        printf("%s bios fan control failed. Exiting.\n", enable ? "Enabling" : "Disabling");
-        exit_failure();
+        printf("%s bios fan control failed. Exiting.", enable ? "Enabling" : "Disabling");
+        exit_failure("");
     }
     else if (cfg.verbose)
     {
@@ -383,7 +424,7 @@ int get_gpu_temp_via_cmd()
     if (fp == NULL)
     {
         perror("Failed to run get_gpu_temp_cmd");
-        exit(EXIT_FAILURE);
+        exit_failure("");
     }
     if (fgets(output, sizeof(output) - 1, fp) != NULL)
         temp = atoi(output);
@@ -393,38 +434,30 @@ int get_gpu_temp_via_cmd()
     if (temp == 0)
     {
         printf("Failed to get temp from get_gpu_temp_cmd = [%s].\nAwaiting string with number, but got:\n[%s]\n", cfg.get_gpu_temp_cmd, output);
-        exit(EXIT_FAILURE);
+        exit_failure("");
     }
     return temp;
-}
-
-void set_fans_state(int state)
-{
-    set_fan_state(I8K_FAN_LEFT, state);
-    set_fan_state(I8K_FAN_RIGHT, state);
 }
 
 void monitor_show_legend()
 {
     if (cfg.verbose)
     {
-        puts("Config:");
+        puts("\nConfig:");
         printf("  mode                  %s\n", cfg.mode ? "smm" : "i8k");
         printf("  discrete_gpu_mode     %s\n", (cfg.discrete_gpu_mode ? (cfg.discrete_gpu_mode == 1 ? "max(cpu_temp, gpu_temp)" : "separate fans control") : "cpu integrated"));
         printf("  fan_ctrl_logic_mode   %s\n", cfg.fan_ctrl_logic_mode == 0 ? "default" : "simple");
         printf("  bios_disable_method   %d\n", cfg.bios_disable_method);
         printf("  period                %ld ms\n", cfg.period);
         if (cfg.bios_disable_method == 0)
-        {
             printf("  fan_check_period      %ld ms\n", cfg.fan_check_period);
-            printf("  monitor_fan_id        %s\n", cfg.monitor_fan_id == I8K_FAN_RIGHT ? "right" : "left");
-        }
         printf("  jump_timeout          %ld ms\n", cfg.jump_timeout);
         printf("  jump_temp_delta       %d°\n", cfg.jump_temp_delta);
         printf("  t_low  / t_low_fan    %d° / %s\n", cfg.t_low, cfg.t_low_fan ? (cfg.t_low_fan == 1 ? "low" : "high") : "off");
         if (cfg.fan_ctrl_logic_mode == 0)
             printf("  t_mid  / t_mid_fan    %d° / %s\n", cfg.t_mid, cfg.t_mid_fan ? (cfg.t_mid_fan == 1 ? "low" : "high") : "off");
         printf("  t_high / t_high_fan   %d° / %s\n", cfg.t_high, cfg.t_high_fan ? (cfg.t_high_fan == 1 ? "low" : "high") : "off");
+        printf("  cpu_temp_sensor_id    %d %s\n", cfg.cpu_temp_sensor_id, cfg.mode ? "(autodetected)" : "");
         if (cfg.discrete_gpu_mode)
         {
             if (cfg.gpu_temp_sensor_id == -1)
@@ -434,21 +467,20 @@ void monitor_show_legend()
         }
         if (cfg.discrete_gpu_mode == 2)
         {
-            printf("  cpu_fan_id            %s\n", cfg.cpu_fan_id == I8K_FAN_RIGHT ? "right" : "left");
-            printf("  gpu_fan_id            %s\n", cfg.gpu_fan_id == I8K_FAN_RIGHT ? "right" : "left");
+            printf("  gpu_fan_id            %d\n", cfg.gpu_fan_id);
         }
         puts("Legend:");
         if (cfg.discrete_gpu_mode == 0)
         {
             puts("  [TT·F] Current temp and fan state. TT - CPU temp, F - fan state");
-            puts("  [ƒ(F)] Set fans state to F. Fan states: 0 = OFF, 1 = LOW, 2 = HIGH");
+            puts("  [ƒI=F] Set fan with id = I to state F. Fan states: 0 = OFF, 1 = LOW, 2 = HIGH");
             puts("  [¡TT!] Abnormal temp jump detected. TT - CPU temp");
         }
         else
         {
             puts("  [t****] t is temp sensor type: c = CPU, g = GPU");
             puts("  [tTT·F] Current temp and fan state. TT - temp, F - fan state");
-            puts("  [tƒ(F)] Set fans state to F. Fan states: 0 = OFF, 1 = LOW, 2 = HIGH");
+            puts("  [ ƒI=F] Set fan with id = I to state F. Fan states: 0 = OFF, 1 = LOW, 2 = HIGH");
             puts("  [t¡TT!] Abnormal temp jump detected. TT - temp");
         }
         if (cfg.monitor_only)
@@ -466,6 +498,7 @@ void monitor()
     monitor_show_legend();
     monitor_init_state(0);
     monitor_init_state(1);
+    monitor_init_fans_state();
 
     unsigned long tick = cfg.tick * 1000; // 100 ms
     int period_ticks = cfg.period / cfg.tick;
@@ -489,9 +522,7 @@ void monitor()
         if (fan_check_period_tick == 0)
         {
             fan_check_period_tick = fan_check_period_ticks;
-            monitor_get_fan_state(0);
-            if (cfg.discrete_gpu_mode == 2)
-                monitor_get_fan_state(1);
+            monitor_get_fans_state();
         }
 
         // get temp and use fan control logic
@@ -503,65 +534,71 @@ void monitor()
                 monitor_state(1);
         }
 
-        monitor_set_fan_state(0);
-        if (cfg.discrete_gpu_mode == 2)
-            monitor_set_fan_state(1);
+        monitor_set_fans_state();
     }
 }
 
+void monitor_init_fans_state()
+{
+    for (int fan_id = 0; fan_id < cfg.fans_count; fan_id++)
+    {
+        fan_state[fan_id].fan_state = I8K_FAN_OFF;
+        fan_state[fan_id].real_fan_state = fan_state[fan_id].fan_state;
+        fan_state[fan_id].last_setted_fan_state = -1;
+        if (cfg.discrete_gpu_mode == 2 && fan_id == cfg.gpu_fan_id)
+            fan_state[fan_id].state_id = 1;
+        else
+            fan_state[fan_id].state_id = 0;
+    }
+}
 void monitor_init_state(int state_id)
 {
     monitor_get_temp_state(state_id);
     state[state_id].temp_prev = state[state_id].temp;
-    state[state_id].fan_state = I8K_FAN_OFF;
-    state[state_id].real_fan_state = state[state_id].fan_state;
     state[state_id].jump_timeout_ticks = cfg.jump_timeout / cfg.tick;
-
     state[state_id].ignore_current_temp = 0; // jump_timeout_tick
-    state[state_id].last_setted_fan_state = -1;
 }
-void monitor_set_fan_state(int state_id)
+void monitor_set_fans_state()
 {
-    // set fan state
-    if ((state[state_id].fan_state != state[state_id].last_setted_fan_state) && (state[state_id].fan_state != state[state_id].real_fan_state) && !cfg.monitor_only)
+    for (int fan_id = 0; fan_id < cfg.fans_count; fan_id++)
     {
-        if (cfg.verbose)
+        if ((fan_state[fan_id].fan_state != fan_state[fan_id].last_setted_fan_state) && (fan_state[fan_id].fan_state != fan_state[fan_id].real_fan_state) && !cfg.monitor_only)
         {
-            printf("%cƒ(%d)" MON_SPACE, state[state_id].temp_type, state[state_id].fan_state);
-            fflush(stdout);
+            if (cfg.verbose)
+            {
+                printf(" ƒ%d=%d" MON_SPACE, fan_id, fan_state[fan_id].fan_state);
+                fflush(stdout);
+            }
+            fan_state[fan_id].last_setted_fan_state = fan_state[fan_id].fan_state;
+            set_fan_state(fan_id, fan_state[fan_id].fan_state);
         }
-        state[state_id].last_setted_fan_state = state[state_id].fan_state;
-        if (cfg.discrete_gpu_mode == 2)
-            set_fan_state(state_id == 0 ? cfg.cpu_fan_id : cfg.gpu_fan_id, state[state_id].fan_state);
-        else
-            set_fans_state(state[state_id].fan_state);
     }
 }
 
-void monitor_get_fan_state(int state_id)
+void monitor_get_fans_state()
 {
-    if (cfg.bios_disable_method)
+    for (int fan_id = 0; fan_id < cfg.fans_count; fan_id++)
     {
-        //don't monitor fans states on bios_disable_method
-        state[state_id].real_fan_state = state[state_id].fan_state;
-    }
-    else
-    {
-        if (cfg.discrete_gpu_mode == 2)
-            state[state_id].real_fan_state = get_fan_state(state_id == 0 ? cfg.cpu_fan_id : cfg.gpu_fan_id);
+        if (cfg.bios_disable_method)
+        {
+            //don't monitor fans states on bios_disable_method
+            fan_state[fan_id].real_fan_state = fan_state[fan_id].fan_state;
+        }
         else
-            state[state_id].real_fan_state = get_fan_state(cfg.monitor_fan_id);
-    }
+        {
+            fan_state[fan_id].real_fan_state = get_fan_state(fan_id);
+        }
 
-    if (state[state_id].real_fan_state == state[state_id].last_setted_fan_state)
-        state[state_id].last_setted_fan_state = -1;
+        if (fan_state[fan_id].real_fan_state == fan_state[fan_id].last_setted_fan_state)
+            fan_state[fan_id].last_setted_fan_state = -1;
+    }
 }
 
 void monitor_get_temp_state(int state_id)
 {
     if (cfg.discrete_gpu_mode == 1)
     {
-        int cpu_temp = get_temp(0);
+        int cpu_temp = get_temp(cfg.cpu_temp_sensor_id);
         int gpu_temp = get_temp(cfg.gpu_temp_sensor_id);
         state[state_id].temp_type = cpu_temp > gpu_temp ? 'c' : 'g';
         state[state_id].temp = cpu_temp > gpu_temp ? cpu_temp : gpu_temp;
@@ -569,19 +606,18 @@ void monitor_get_temp_state(int state_id)
     else if (cfg.discrete_gpu_mode == 2)
     {
         state[state_id].temp_type = state_id == 0 ? 'c' : 'g';
-        state[state_id].temp = state_id == 0 ? get_temp(0) : get_temp(cfg.gpu_temp_sensor_id);
+        state[state_id].temp = state_id == 0 ? get_temp(cfg.cpu_temp_sensor_id) : get_temp(cfg.gpu_temp_sensor_id);
     }
     else
     {
         state[state_id].temp_type = ' ';
-        state[state_id].temp = get_temp(0);
+        state[state_id].temp = get_temp(cfg.cpu_temp_sensor_id);
     }
 }
 
 void monitor_state(int state_id)
 {
-
-    state[state_id].last_setted_fan_state = -1;
+    int real_fan_state = 0;
     if (!state[state_id].ignore_current_temp)
     {
         state[state_id].temp_prev = state[state_id].temp;
@@ -591,25 +627,33 @@ void monitor_state(int state_id)
             state[state_id].ignore_current_temp = state[state_id].jump_timeout_ticks;
         else
         {
-            if (cfg.fan_ctrl_logic_mode)
+            for (int fan_id = 0; fan_id < cfg.fans_count; fan_id++)
             {
-                // simple: allow bios to control fans: stops/starts fans оnly at boundary temps
-                if (state[state_id].temp <= cfg.t_low && state[state_id].real_fan_state > cfg.t_low_fan)
-                    state[state_id].fan_state = cfg.t_low_fan;
-                else if (state[state_id].temp >= cfg.t_high && state[state_id].real_fan_state < cfg.t_high_fan)
-                    state[state_id].fan_state = cfg.t_high_fan;
-                else
-                    state[state_id].fan_state = state[state_id].real_fan_state;
-            }
-            else
-            {
-                // default fan control logic
-                if (state[state_id].temp <= cfg.t_low)
-                    state[state_id].fan_state = cfg.t_low_fan;
-                else if (state[state_id].temp > cfg.t_high)
-                    state[state_id].fan_state = cfg.t_high_fan;
-                else if (state[state_id].temp >= cfg.t_mid)
-                    state[state_id].fan_state = state[state_id].fan_state > cfg.t_mid_fan ? state[state_id].fan_state : cfg.t_mid_fan;
+                if (fan_state[fan_id].state_id == state_id)
+                {
+                    fan_state[fan_id].last_setted_fan_state = -1;
+                    if (cfg.fan_ctrl_logic_mode)
+                    {
+                        // simple: allow bios to control fans: stops/starts fans оnly at boundary temps
+                        if (state[state_id].temp <= cfg.t_low && fan_state[fan_id].real_fan_state > cfg.t_low_fan)
+                            fan_state[fan_id].fan_state = cfg.t_low_fan;
+                        else if (state[state_id].temp >= cfg.t_high && fan_state[fan_id].real_fan_state < cfg.t_high_fan)
+                            fan_state[fan_id].fan_state = cfg.t_high_fan;
+                        else
+                            fan_state[fan_id].fan_state = fan_state[fan_id].real_fan_state;
+                    }
+                    else
+                    {
+                        // default fan control logic
+                        if (state[state_id].temp <= cfg.t_low)
+                            fan_state[fan_id].fan_state = cfg.t_low_fan;
+                        else if (state[state_id].temp > cfg.t_high)
+                            fan_state[fan_id].fan_state = cfg.t_high_fan;
+                        else if (state[state_id].temp >= cfg.t_mid)
+                            fan_state[fan_id].fan_state = fan_state[fan_id].fan_state > cfg.t_mid_fan ? fan_state[fan_id].fan_state : cfg.t_mid_fan;
+                    }
+                    real_fan_state = fan_state[fan_id].real_fan_state;
+                }
             }
         }
     }
@@ -618,7 +662,7 @@ void monitor_state(int state_id)
         if (state[state_id].ignore_current_temp)
             printf("%c¡%d!" MON_SPACE, state[state_id].temp_type, state[state_id].temp);
         else
-            printf("%c%d·%d" MON_SPACE, state[state_id].temp_type, state[state_id].temp, state[state_id].real_fan_state);
+            printf("%c%d·%d" MON_SPACE, state[state_id].temp_type, state[state_id].temp, real_fan_state);
 
         fflush(stdout);
     }
@@ -642,19 +686,16 @@ void foolproof_checks()
     check_failed += (cfg.period < 100 || cfg.period > 5000) ? foolproof_error("period in [100,5000]") : false;
     check_failed += (cfg.fan_check_period > cfg.period) ? foolproof_error("fan_check_period <= period") : false;
     check_failed += (cfg.fan_check_period < 100 || cfg.fan_check_period > 5000) ? foolproof_error("fan_check_period in [100,5000]") : false;
-    check_failed += (cfg.monitor_fan_id != 0 && cfg.monitor_fan_id != 1) ? foolproof_error("monitor_fan_id = 0(left) or 1(right)") : false;
     check_failed += (cfg.jump_timeout < 100 || cfg.jump_timeout > 5000) ? foolproof_error("jump_timeout in [100,5000]") : false;
     check_failed += (cfg.jump_temp_delta < 2) ? foolproof_error("jump_temp_delta > 2") : false;
 
     check_failed += (cfg.discrete_gpu_mode != 0 && cfg.discrete_gpu_mode != 1 && cfg.discrete_gpu_mode != 2) ? foolproof_error("discrete_gpu_mode = 0 (cpu integrated) or 1 (max(cpu_temp,gpu_temp)) or 2 (separeted fan control)") : false;
-    check_failed += (cfg.cpu_fan_id != 0 && cfg.cpu_fan_id != 1 && cfg.cpu_fan_id != 9) ? foolproof_error("cpu_fan_id = 0(left) or 1(right) or 9(autodetect)") : false;
     check_failed += (cfg.gpu_fan_id != 0 && cfg.gpu_fan_id != 1 && cfg.gpu_fan_id != 9) ? foolproof_error("gpu_fan_id = 0(left) or 1(right) or 9(autodetect)") : false;
     //check_failed += !((cfg.gpu_temp_sensor_id >= 0 && cfg.gpu_temp_sensor_id <= 3) || cfg.gpu_temp_sensor_id == 9) ? foolproof_error("gpu_temp_sensor_id = 0...3 or 9(autodetect)") : false;
+    check_failed += (cfg.fans_count < 1 || cfg.fans_count > 3) && cfg.fans_count != 9 ? foolproof_error("fans_count = 1,2,3 or 9(autodetect)") : false;
+
     if (check_failed)
-    {
-        printf("foolproof_checks() was failed.\nIf you are sure what you do, checks can be disabled using \"--foolproof_checks 0\" in command line or add \"foolproof_checks 0\" in %s\n", CFG_FILE);
-        exit_failure();
-    }
+        exit_failure("foolproof_checks() was failed.\nIf you are sure what you do, checks can be disabled using \"--foolproof_checks 0\" in command line or add \"foolproof_checks 0\" in " CFG_FILE);
 }
 
 int foolproof_error(char *str)
@@ -663,8 +704,9 @@ int foolproof_error(char *str)
     return true;
 }
 
-void exit_failure()
+void exit_failure(const char *str)
 {
+    puts(str);
     exit(EXIT_FAILURE);
 }
 
@@ -729,7 +771,7 @@ void cfg_load()
 void cfg_error(int line_id)
 {
     printf("Error while loading " CFG_FILE " in line %d\n", line_id);
-    exit_failure();
+    exit_failure("");
 }
 
 void cfg_set(char *key, int value, int line_id)
@@ -740,8 +782,6 @@ void cfg_set(char *key, int value, int line_id)
         cfg.period = value;
     else if (strcmp(key, "fan_check_period") == 0)
         cfg.fan_check_period = value;
-    else if (strcmp(key, "monitor_fan_id") == 0)
-        cfg.monitor_fan_id = value;
     else if (strcmp(key, "jump_timeout") == 0)
         cfg.jump_timeout = value;
     else if (strcmp(key, "jump_temp_delta") == 0)
@@ -770,10 +810,17 @@ void cfg_set(char *key, int value, int line_id)
         cfg.fan_ctrl_logic_mode = value;
     else if (strcmp(key, "discrete_gpu_mode") == 0)
         cfg.discrete_gpu_mode = value;
-    else if (strcmp(key, "cpu_fan_id") == 0)
-        cfg.cpu_fan_id = value;
     else if (strcmp(key, "gpu_fan_id") == 0)
         cfg.gpu_fan_id = value;
+    else if (strcmp(key, "fans_count") == 0)
+        cfg.fans_count = value;
+    else if (strcmp(key, "cpu_fan_id") == 0 || strcmp(key, "monitor_fan_id") == 0)
+    {
+        if (line_id > 0)
+            printf(CFG_FILE " line %d: parameter %s is deprecated(ignoring). Please remove this line.\n", line_id, key);
+        else
+            printf("WARNING: argument --%s is deprecated(ignoring)\n", key);
+    }
     else
     {
         if (line_id > 0)
@@ -781,15 +828,15 @@ void cfg_set(char *key, int value, int line_id)
         else
             printf("Unknown argument --%s\n", key);
 
-        exit_failure();
+        exit_failure("");
     }
 }
 void show_header()
 {
     if (cfg.test_mode)
         return;
-    puts("dell-fan-mon v1.1 by https://github.com/ru-ace");
-    puts("Fan monitor and control for Dell laptops via dell-smm-hwmon(i8k) kernel module or direct SMM BIOS calls.\n");
+    puts("dell-fan-mon v1.2 by https://github.com/ru-ace");
+    puts("Fan monitor and control for Dell laptops via direct SMM BIOS calls or dell-smm-hwmon(i8k) kernel module.\n");
 }
 void usage()
 {
@@ -807,7 +854,6 @@ void usage()
     printf("  --bios_disable_method METHOD      (default: %d)\n", cfg.bios_disable_method);
     printf("  --period MILLISECONDS             (default: %ld ms)\n", cfg.period);
     printf("  --fan_check_period MILLISECONDS   (default: %ld ms)\n", cfg.fan_check_period);
-    printf("  --monitor_fan_id FAN_ID           (default: %d = %s)\n", cfg.monitor_fan_id, cfg.monitor_fan_id == I8K_FAN_RIGHT ? "right" : "left");
     printf("  --jump_timeout MILLISECONDS       (default: %ld ms)\n", cfg.jump_timeout);
     printf("  --jump_temp_delta CELSIUS         (default: %d°)\n", cfg.jump_temp_delta);
     printf("  --t_low CELSIUS                   (default: %d°)\n", cfg.t_low);
@@ -816,8 +862,8 @@ void usage()
     printf("  --t_low_fan FAN_STATE             (default: %d = %s)\n", cfg.t_low_fan, cfg.t_low_fan ? (cfg.t_low_fan == 1 ? "low" : "high") : "off");
     printf("  --t_mid_fan FAN_STATE             (default: %d = %s)\n", cfg.t_mid_fan, cfg.t_mid_fan ? (cfg.t_mid_fan == 1 ? "low" : "high") : "off");
     printf("  --t_high_fan FAN_STATE            (default: %d = %s)\n", cfg.t_high_fan, cfg.t_high_fan ? (cfg.t_high_fan == 1 ? "low" : "high") : "off");
-    printf("  --cpu_fan_id FAN_ID               (default: %d = %s)\n", cfg.cpu_fan_id, (cfg.cpu_fan_id == I8K_FAN_RIGHT ? "right" : (cfg.cpu_fan_id == I8K_FAN_LEFT ? "left" : "autodetect")));
-    printf("  --gpu_fan_id FAN_ID               (default: %d = %s)\n", cfg.gpu_fan_id, (cfg.gpu_fan_id == I8K_FAN_RIGHT ? "right" : (cfg.gpu_fan_id == I8K_FAN_LEFT ? "left" : "autodetect")));
+    printf("  --gpu_fan_id FAN_ID               (default: %d%s)\n", cfg.gpu_fan_id, (cfg.gpu_fan_id == 9 ? " = autodetect" : ""));
+    printf("  --fans_count NUMBER_OF_FANS       (default: %d%s)\n", cfg.fans_count, (cfg.fans_count == 9 ? " = autodetect" : ""));
 
     puts("");
 }
@@ -860,7 +906,7 @@ void parse_args(int argc, char **argv)
             if (i == argc || !isdigit(argv[i][0]))
             {
                 printf("Argument --%s need value\n", key);
-                exit_failure();
+                exit_failure("");
             }
             else
             {
@@ -871,7 +917,7 @@ void parse_args(int argc, char **argv)
         else
         {
             printf("Unknown argument %s\n", argv[i]);
-            exit_failure();
+            exit_failure("");
         }
     }
 }
@@ -882,7 +928,7 @@ void daemonize()
     if (pid == -1) //failure
     {
         perror("can't fork()");
-        exit_failure();
+        exit_failure("");
     }
     else if (pid == 0) //child
         cfg.verbose = false;
@@ -899,7 +945,10 @@ void signal_handler(int signal_id)
     {
         if (cfg.verbose)
             printf("\nCatch signal %d. Restoring bios fan control.\n", signal_id);
-        set_fans_state(I8K_FAN_HIGH);
+
+        for (int fan_id = 0; fan_id < cfg.fans_count; fan_id++)
+            set_fan_state(fan_id, I8K_FAN_HIGH);
+
         if (cfg.bios_disable_method == 1 || cfg.bios_disable_method == 2 || cfg.bios_disable_method == 3)
             set_bios_fan_control(true);
     }
@@ -915,12 +964,12 @@ void signal_handler_init()
     if (signal(SIGINT, signal_handler) == SIG_ERR)
     {
         perror("can't catch SIGINT");
-        exit_failure();
+        exit_failure("");
     }
     if (signal(SIGTERM, signal_handler) == SIG_ERR)
     {
         perror("can't catch SIGTERM");
-        exit_failure();
+        exit_failure("");
     }
 }
 
@@ -931,14 +980,14 @@ void smm_bios_fan_control_scanner()
     //       if i set fan_state = LOW(1), bios set it to HIGH(2) within 10 seconds
     //       i don't sure that this fact is true for all dell notebooks.
     // No success on Dell 7559 :(
-    exit_failure();
+    exit_failure("Please DON'T USE THIS CODE - it may be DANGEROUS");
     int i;
     for (i = 0x5; i <= 0xff; i++)
     {
         int cmd = (i << 8) + 0xa3;
         printf("smm_send(%#06x) ", cmd);
         int res = -1; // smm_send(cmd, 0);
-        printf("retured %#06x", res);
+        printf("returned %#06x", res);
         if (res == -1)
         {
             printf(", bad :(\n");
@@ -947,16 +996,16 @@ void smm_bios_fan_control_scanner()
         else
         {
             sleep(1);
-            set_fans_state(I8K_FAN_LOW);
+            set_fan_state(0, I8K_FAN_LOW);
             printf(", sleep(10s)");
         }
 
         fflush(stdout);
         sleep(10);
-        int real_fan_state = get_fan_state(I8K_FAN_LEFT);
+        int real_fan_state = get_fan_state(0);
         if (real_fan_state == 1)
         {
-            printf(", SEEMS WE FOUND DISABLE BIOS FAN COTROL :)))\n");
+            printf(", SEEMS WE FOUND DISABLE BIOS FAN CONTROL :)))\n");
             exit(1);
         }
         else
@@ -986,35 +1035,26 @@ int main(int argc, char **argv)
     if (cfg.foolproof_checks)
         foolproof_checks();
 
-    if ((cfg.discrete_gpu_mode == 0) ||
-        (cfg.discrete_gpu_mode == 1 && cfg.get_gpu_temp_cmd != NULL) ||
-        (cfg.discrete_gpu_mode == 2 && cfg.get_gpu_temp_cmd != NULL && cfg.cpu_fan_id != 9 && cfg.gpu_fan_id != 9))
+    if (cfg.fans_count != 9 && ((cfg.discrete_gpu_mode == 0) ||
+                                (cfg.discrete_gpu_mode == 1 && cfg.get_gpu_temp_cmd != NULL) ||
+                                (cfg.discrete_gpu_mode == 2 && cfg.get_gpu_temp_cmd != NULL && cfg.gpu_fan_id != 9)))
     {
-        //can be run under unprivileges user in mode 0, cause no need to run autodetect
-        //check get_gpu_temp_cmd before disabling bios
+        //can be run under unprivileged user in mode 0, cause no need to run autodetect
+
+        //check get_gpu_temp_cmd
         if (cfg.discrete_gpu_mode > 0)
             get_gpu_temp_via_cmd();
+
+        cfg.cpu_temp_sensor_id = 0;
         cfg.gpu_temp_sensor_id = -1;
     }
-    else if (cfg.discrete_gpu_mode > 0)
+    else
     {
         if (cfg.mode != 1)
-        {
-            printf("discrete_gpu_mode = %d required mode = 1 (direct SMM BIOS calls) for autodetect and get GPU temp\n", cfg.discrete_gpu_mode);
-            puts("You can set get_gpu_temp_cmd in " CFG_FILE " for providfing command to get gpu temp. This allow you to use mode = 0.\n");
-            exit(EXIT_FAILURE);
-        }
-        if (cfg.gpu_temp_sensor_id == 9)
-        {
-            cfg.gpu_temp_sensor_id = get_gpu_temp_sensor_id();
-        }
-        if (cfg.discrete_gpu_mode == 2)
-        {
-            if (cfg.cpu_fan_id == 9)
-                cfg.cpu_fan_id = get_cpu_fan_id();
-            if (cfg.gpu_fan_id == 9)
-                cfg.gpu_fan_id = 1 - cfg.cpu_fan_id;
-        }
+            exit_failure("Autodetection types of fans & sensors required mode = 1 (direct SMM BIOS calls)\n");
+
+        scan_sensors();
+        scan_fans();
     }
     if (cfg.test_mode)
         exit(EXIT_SUCCESS);
