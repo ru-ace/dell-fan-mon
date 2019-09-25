@@ -543,7 +543,7 @@ void monitor_init_fans_state()
     for (int fan_id = 0; fan_id < cfg.fans_count; fan_id++)
     {
         fan_state[fan_id].fan_state = I8K_FAN_OFF;
-        fan_state[fan_id].real_fan_state = fan_state[fan_id].fan_state;
+        fan_state[fan_id].real_fan_state = 9; // gets fans state on start
         fan_state[fan_id].last_setted_fan_state = -1;
         if (cfg.discrete_gpu_mode == 2 && fan_id == cfg.gpu_fan_id)
             fan_state[fan_id].state_id = 1;
@@ -579,7 +579,7 @@ void monitor_get_fans_state()
 {
     for (int fan_id = 0; fan_id < cfg.fans_count; fan_id++)
     {
-        if (cfg.bios_disable_method)
+        if (cfg.bios_disable_method && fan_state[fan_id].real_fan_state != 9)
         {
             //don't monitor fans states on bios_disable_method
             fan_state[fan_id].real_fan_state = fan_state[fan_id].fan_state;
@@ -1053,8 +1053,8 @@ int main(int argc, char **argv)
         if (cfg.mode != 1)
             exit_failure("Autodetection types of fans & sensors required mode = 1 (direct SMM BIOS calls)\n");
 
-        scan_sensors();
         scan_fans();
+        scan_sensors();
     }
     if (cfg.test_mode)
         exit(EXIT_SUCCESS);

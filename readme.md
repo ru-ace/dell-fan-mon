@@ -207,7 +207,7 @@ dell-fan-mon accepts the following command-line options
   GPU fan_id, sometimes determined automatically through SMM BIOS. Used only when **discrete_gpu_mode** is 2. 0 = right, 1 = left. Default is 9 (autodetect).  
 
   - **--fans_count** \<*number*\>
-    Set number of fans in your device. Normaly autodetected automatically through SMM BIOS. Default is 9 (autodetect). 
+    Set number of fans in your device. Normally detected automatically through SMM BIOS. Default is 9 (autodetect). 
 
 
 ### CONFIGURATION
