@@ -7,7 +7,7 @@ This file contains changelog of [Dell Fan Monitor](https://github.com/ru-ace/del
 ### Fixed
 ### Removed
 -->
-## [Unreleased] 2019-09-25
+## [Version 1.2] 2019-09-25
 ### Added
 - Autodetection of fans number 
 - Support devices with 1 and 3 fans (before worked only on devices with 2 fans)
@@ -42,7 +42,7 @@ This file contains changelog of [Dell Fan Monitor](https://github.com/ru-ace/del
 ### Removed
 - Others source files from [i8kutils](https://github.com/vitorafsr/i8kutils)  
 
-[Unreleased]: https://github.com/ru-ace/dell-fan-mon/compare/v1.1...HEAD
+[Unreleased]: https://github.com/ru-ace/dell-fan-mon/compare/v1.2...HEAD
 [Version 1.2]: https://github.com/ru-ace/dell-fan-mon/compare/v1.1...v1.2
 [Version 1.1]: https://github.com/ru-ace/dell-fan-mon/compare/v1.0...v1.1
 [Version 1.0]: https://github.com/ru-ace/dell-fan-mon/compare/v0.0...v1.0

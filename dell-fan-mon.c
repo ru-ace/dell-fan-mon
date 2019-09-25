@@ -178,10 +178,10 @@ void scan_sensors()
         {
             if (cfg.verbose || cfg.test_mode)
             {
-                puts("If you don't have discrete GPU - you can ignore this message.\n");
 
                 puts("Couldn't autodetect gpu_temp_sensor_id. Seems there no discrete gpu.");
                 puts("Using discrete_gpu_mode 0 (cpu temp monitor only)\n");
+                puts("If you don't have discrete GPU - you can ignore this message.\n");
                 puts("PLEASE NOTICE: If you have discrete gpu and can get temp via command line utilites");
                 puts("You can set get_gpu_temp_cmd in " CFG_FILE " to provide command for acquiring gpu temp");
                 puts("As output of command dell-fan-mon awaiting line with number.\n");
