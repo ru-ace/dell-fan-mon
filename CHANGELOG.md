@@ -7,6 +7,10 @@ This file contains changelog of [Dell Fan Monitor](https://github.com/ru-ace/del
 ### Fixed
 ### Removed
 -->
+## [Version 1.2.1] 2019-10-11
+### Fixed
+- Unexpected exit with `smm_send error` during operation.
+
 ## [Version 1.2] 2019-09-25
 ### Added
 - Autodetection of fans number 
@@ -42,7 +46,8 @@ This file contains changelog of [Dell Fan Monitor](https://github.com/ru-ace/del
 ### Removed
 - Others source files from [i8kutils](https://github.com/vitorafsr/i8kutils)  
 
-[Unreleased]: https://github.com/ru-ace/dell-fan-mon/compare/v1.2...HEAD
+[Unreleased]: https://github.com/ru-ace/dell-fan-mon/compare/v1.2.1...HEAD
+[Version 1.2.1]: https://github.com/ru-ace/dell-fan-mon/compare/v1.2...v1.2.1
 [Version 1.2]: https://github.com/ru-ace/dell-fan-mon/compare/v1.1...v1.2
 [Version 1.1]: https://github.com/ru-ace/dell-fan-mon/compare/v1.0...v1.1
 [Version 1.0]: https://github.com/ru-ace/dell-fan-mon/compare/v0.0...v1.0

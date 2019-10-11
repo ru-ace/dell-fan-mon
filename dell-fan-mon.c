@@ -218,7 +218,6 @@ int get_fan_state(int fan)
     if (cfg.mode)
     {
         //smm
-        usleep(50);
         int res = smm_send(I8K_SMM_GET_FAN, fan);
         if (res == -1)
             exit_failure("get_fan_state smm_send error");
@@ -303,6 +302,7 @@ void smm_init_ioperm()
 
 int smm_asm_call(struct smm_regs *regs)
 {
+    usleep(50000);
     int rc;
     int eax = regs->eax;
     asm volatile("pushq %%rax\n\t"
@@ -339,7 +339,7 @@ int smm_asm_call(struct smm_regs *regs)
 
 int smm_send(unsigned int cmd, unsigned int arg)
 {
-    usleep(1000);
+
     struct smm_regs regs = {
         .eax = cmd,
         .ebx = arg,
@@ -353,7 +353,7 @@ int smm_send(unsigned int cmd, unsigned int arg)
 
 int smm_check_dell_signature(unsigned int signature_cmd)
 {
-    usleep(1000);
+
     struct smm_regs regs = {
         .eax = signature_cmd,
         .ebx = 0,
@@ -835,7 +835,7 @@ void show_header()
 {
     if (cfg.test_mode)
         return;
-    puts("dell-fan-mon v1.2 by https://github.com/ru-ace");
+    puts("dell-fan-mon v1.2.1 by https://github.com/ru-ace");
     puts("Fan monitor and control for Dell laptops via direct SMM BIOS calls or dell-smm-hwmon(i8k) kernel module.\n");
 }
 void usage()
