@@ -268,7 +268,7 @@ sudo make uninstall
 Q: I got `init_ioperm: Operation not permitted`<br>
 A: Disable secure boot in bios. See [issue 2](https://github.com/ru-ace/dell-fan-mon/issues/2)
 
-[version-badge]: https://img.shields.io/badge/version-1.2.1-blue.svg
+[version-badge]: https://img.shields.io/badge/version-1.2.2-blue.svg
 [CHANGELOG]: ./CHANGELOG.md
 [license-badge]: https://img.shields.io/badge/license-GPL3-blue.svg
 [COPYING]: ./COPYING

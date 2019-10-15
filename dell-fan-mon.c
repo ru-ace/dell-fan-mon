@@ -80,7 +80,7 @@ void i8k_init()
         show_header();
         perror("Can't open " I8K_PROC);
         puts("Seems missing dell-smm-hwmon(i8k) kernel module");
-        puts("You can try \"--mode 1\" for using Dell SMM BIOS calls");
+        puts("You can try \"--mode 1\" for using direct calls to Dell SMM BIOS");
         exit(EXIT_FAILURE);
     }
 }
@@ -302,7 +302,6 @@ void smm_init_ioperm()
 
 int smm_asm_call(struct smm_regs *regs)
 {
-    usleep(50000);
     int rc;
     int eax = regs->eax;
     asm volatile("pushq %%rax\n\t"
@@ -339,16 +338,23 @@ int smm_asm_call(struct smm_regs *regs)
 
 int smm_send(unsigned int cmd, unsigned int arg)
 {
-
+    usleep(1000);
     struct smm_regs regs = {
         .eax = cmd,
         .ebx = arg,
     };
-
-    int res = smm_asm_call(&regs);
+    // some times smm_asm_call failed - retry 2 times with 100ms cooldown
+    for (int tries = 0; tries < 3; tries++)
+    {
+        int res = smm_asm_call(&regs);
+        if (res != -1)
+            return regs.eax;
+        //puts("Got error on smm_asm_call");
+        usleep(100000);
+    }
     //if (cfg.verbose)
     //printf("smm_send(%#06x, %#06x): i8k_smm returns %#06x, eax = %#06x\n", cmd, arg, res, regs.eax);
-    return res == -1 ? res : regs.eax;
+    return -1;
 }
 
 int smm_check_dell_signature(unsigned int signature_cmd)
@@ -835,7 +841,7 @@ void show_header()
 {
     if (cfg.test_mode)
         return;
-    puts("dell-fan-mon v1.2.1 by https://github.com/ru-ace");
+    puts("dell-fan-mon v1.2.2 by https://github.com/ru-ace");
     puts("Fan monitor and control for Dell laptops via direct SMM BIOS calls or dell-smm-hwmon(i8k) kernel module.\n");
 }
 void usage()
@@ -1051,7 +1057,7 @@ int main(int argc, char **argv)
     else
     {
         if (cfg.mode != 1)
-            exit_failure("Autodetection types of fans & sensors required mode = 1 (direct SMM BIOS calls)\n");
+            exit_failure("Autodetection types of fans & sensors required mode = 1 (direct calls to SMM BIOS)\n");
 
         scan_fans();
         scan_sensors();

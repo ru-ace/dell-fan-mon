@@ -10,12 +10,6 @@
 #define I8K_SMM_GET_DELL_SIG1 0xfea3
 #define I8K_SMM_GET_DELL_SIG2 0xffa3
 
-//common for i8kctl & delfan
-
-void set_fan_status(int, int);
-int get_fan_status(int);
-int get_temp(int);
-
 // dellfan start
 #define DISABLE_BIOS_METHOD1 0x30a3
 #define ENABLE_BIOS_METHOD1 0x31a3
@@ -126,6 +120,9 @@ struct t_fan_state
     int last_setted_fan_state;
 };
 
+void set_fan_state(int, int);
+int get_fan_state(int);
+int get_temp(int);
 int get_gpu_temp_via_cmd();
 
 void monitor();
