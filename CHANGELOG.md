@@ -7,6 +7,10 @@ This file contains changelog of [Dell Fan Monitor](https://github.com/ru-ace/del
 ### Fixed
 ### Removed
 -->
+## [Unreleased]
+### Changed
+- Change default config to **fan_ctrl_logic_mode 1** (when disabling BIOS doesn't work)
+
 ## [Version 1.2.2] 2019-10-14
 ### Fixed
 - Unexpected exit with `smm_send error` during operation.

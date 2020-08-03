@@ -72,7 +72,7 @@ If you have discrete GPU it's good idea to run dell-fan-mon in verbose mode to b
 .SH "FAN CONTROL LOGIC"
 dell-fan-mon has two modes of fans control logic(\fB--fan_ctrl_logic_mode\fR <\fImode\fP>) regarding 3 temperature thresholds \fBt_low\fR, \fBt_mid\fR, \fBt_high\fR and corresponding fan states \fBt_low_fan\fR, \fBt_mid_fan\fR, \fBt_high_fan\fR:
 .IP \[bu] 2
-\fImode\fP 0: Default logic (with default t_*_fan)
+\fImode\fP 0: Full control logic (with default t_*_fan)
 .RS
 .IP \[bu] 2 
 When temperature rising:
@@ -96,7 +96,7 @@ Real code:
 .RE
 
 .IP \[bu]
-\fImode\fP 1: Simple logic which allow BIOS to control fans. Stop/start fans оnly at boundary temps
+\fImode\fP 1 (default): Simple logic which allow BIOS to control fans. Stop/start fans оnly at boundary temps
     if temp < t_low: fan_state = t_low_fan
     if temp > t_high: fan_state = t_high_fan
 .SH "ABNORMAL TEMP JUMP DETECTION"
@@ -142,9 +142,9 @@ Monitoring mode of discrete GPU temp. Default is 1.
 \fB--fan_ctrl_logic_mode\fR <\fImode\fP>
 Set fan control logic. Default is 0.
 .br
-\fImode\fP 0: default logic (see above)
+\fImode\fP 0: full control logic (see above)
 .br
-\fImode\fP 1: allow BIOS to control fans. Stop/start fans оnly at boundary temps(see above)
+\fImode\fP 1 (default): allow BIOS to control fans. Stop/start fans оnly at boundary temps(see above)
 .TP
 \fB--bios_disable_method\fR <\fImethod\fP>
 Set disable BIOS fans control method. Not always works. Default is 0.

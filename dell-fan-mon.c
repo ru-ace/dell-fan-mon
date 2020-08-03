@@ -32,7 +32,7 @@ struct t_fan_state fan_state[MAX_FANS];
 
 struct t_cfg cfg = {
     .mode = 1,                  // 0 - i8k, 1 - smm
-    .fan_ctrl_logic_mode = 0,   // 0 - default (see end of dell-fan-mon.conf), 1 - allow bios to control fans: stops/starts fans оnly at boundary temps
+    .fan_ctrl_logic_mode = 1,   // 0 - full control (see end of dell-fan-mon.conf), 1 - allow bios to control fans: stops/starts fans оnly at boundary temps
     .bios_disable_method = 0,   // 0 - allow bios to control fans, 1/2 - smm calls for disabling bios fan control from https://github.com/clopez/dellfan
     .period = 1000,             // period in ms for checking temp and setting fans
     .fan_check_period = 1000,   // period in ms for check fans state and recover it (if bios control fans)

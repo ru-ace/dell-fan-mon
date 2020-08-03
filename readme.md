@@ -78,7 +78,7 @@ logic(**--fan\_ctrl\_logic\_mode** \<*mode*\>) regarding 3 temperature
 thresholds **t\_low**, **t\_mid**, **t\_high** and corresponding fan
 states **t\_low\_fan**, **t\_mid\_fan**, **t\_high\_fan**:
 
-  - *mode* 0: Default logic (with default t\_\*\_fan)
+  - *mode* 0: Full control logic (with default t\_\*\_fan)
     
       - When temperature rising:<br> 
         if temp in \[t\_low,t\_mid\] and fan\_state = OFF: fan\_state = OFF <br>
@@ -99,7 +99,7 @@ states **t\_low\_fan**, **t\_mid\_fan**, **t\_high\_fan**:
 
 <!-- end list -->
 
-  - *mode* 1: Simple logic which allow BIOS to control fans. Stop/start
+  - *mode* 1 (default): Simple logic which allow BIOS to control fans. Stop/start
     fans оnly at boundary temps<br> 
     if temp \< t\_low: fan\_state = t\_low\_fan <br>
     if temp \> t\_high: fan\_state = t\_high\_fan
@@ -152,8 +152,8 @@ dell-fan-mon accepts the following command-line options
 
 
   - **--fan\_ctrl\_logic\_mode** \<*mode*\>  
-    Set fan control logic. Default is 0.  
-    *mode* 0: default logic (see above)  
+    Set fan control logic. Default is 1.  
+    *mode* 0: full control logic (see above)  
     *mode* 1: allow BIOS to control fans. Stop/start fans оnly at
     boundary temps(see above)
 
@@ -242,16 +242,18 @@ sudo make test
 # no output is good.
 
 # check if disabling bios works for you:
-sudo ./dell-fan-mon -v --bios_disable_method 1
-sudo ./dell-fan-mon -v --bios_disable_method 2
+sudo ./dell-fan-mon -v --bios_disable_method 1 --fan_ctrl_logic_mode 0 --t_mid 60 --t_high 80 --t_high_fan 2 
+sudo ./dell-fan-mon -v --bios_disable_method 2 --fan_ctrl_logic_mode 0 --t_mid 60 --t_high 80 --t_high_fan 2
 # wait until cpu temp will be greater t_mid(60°) and fans was on. 
 # If during cpu temp lowering BIOS doesn't try change fan state: seems this method works for you.
+# alternate, check that default seting suits for you:
+sudo ./dell-fan-mon -v 
 
 sudo make install
 
 # edit /etc/dell-fan-mon.conf :
-# set bios_disable_method which got earlier
-# if bios_disable_method does not work for you: i recommends use fan_ctrl_logic_mode 1
+# set bios_disable_method which got earlier, also change fan_ctrl_logic_mode, t_mid, t_high, t_high_fan 
+# if bios_disable_method does not work for you, use default settings.
 # after config changed, lets check that no errors output on
 sudo dell-fan-mon --test
 sudo service dell-fan-mon restart
