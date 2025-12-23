@@ -134,7 +134,7 @@ void monitor_set_fans_state();
 void monitor_get_fans_state();
 void monitor_show_legend();
 void parse_args(int, char **);
-void exit_failure();
+void exit_failure(const char *str);
 void usage();
 void show_header();
 
